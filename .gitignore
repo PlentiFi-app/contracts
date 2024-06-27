@@ -1,5 +1,4 @@
 # Ignore cache and lib directories
 cache/
-lib/
 out/
 broadcast/
