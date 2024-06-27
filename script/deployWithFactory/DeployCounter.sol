@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.19 <0.9.0;
 
-import { Increment } from "../../src/increment.sol";
+import { Increment } from "../../src/increment/increment.sol";
 import { BaseScript } from "../Base.s.sol";
 import { Test } from "@forge-std/Test.sol";
 import { console2 } from "@forge-std/console2.sol";
 import {PlentiFiContractDeployer} from "./ScDeployer.sol";
-import {Increment} from "../../src/increment.sol";
+import {Increment} from "../../src/increment/increment.sol";
 
 
 contract DeployCounter is BaseScript, Test {

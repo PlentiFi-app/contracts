@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // PlentiFi Contract Deployer
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "openzeppelin/contracts/access/Ownable.sol";
 
 contract PlentiFiContractDeployer is Ownable {
 

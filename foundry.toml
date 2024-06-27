@@ -17,8 +17,10 @@
   src = "src"
   test = "test"
   remappings = [
-    "@account-abstraction/=node_modules/account-abstraction/contracts/",
-    "@openzeppelin/=node_modules/@openzeppelin/contracts/",
+    "account-abstraction/=node_modules/account-abstraction/contracts/",
+    "@openzeppelin/=node_modules/@openzeppelin/", 
+    "@account-abstraction/=lib/account-abstraction",
+    "openzeppelin/=lib/openzeppelin-contracts/",
     "erc7579-implementation/=node_modules/erc7579-implementation/src/",
     "sentinellist/=node_modules/@rhinestone/sentinellist/src/",
     "forge-std/=/home/elli/Documents/plentifi/clean/contracts/lib/forge-std/src/",

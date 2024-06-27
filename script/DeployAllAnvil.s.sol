@@ -8,13 +8,10 @@ import {Test} from "@forge-std/Test.sol";
 import {WebAuthnAccountFactory} from "../src/Accounts/WebAuthnAccountFactory.sol";
 import {Paymaster} from "../src/Paymaster/Paymaster.sol";
 import {BaseScript} from "./Base.s.sol";
-import {PaperRockScissor721} from "../src/tokens/paperRockScissor721.sol";
-import {Tictactoe721} from "../src/tokens/tictactoe721.sol";
-import {TestErc20} from "../src/tokens/fakeErc20.sol";
-import {TestProducts721} from "../src/tokens/products.sol";
+
 
 contract DeployAnvil is BaseScript, Test {
-    function run() external broadcast returns (address[8] memory) {
+    function run() external broadcast returns (address[3] memory) {
         // // deploy the library contract and return the address
         // EntryPoint entryPoint = new EntryPoint();
         // console2.log("entrypoint", address(entryPoint));
@@ -32,31 +29,6 @@ contract DeployAnvil is BaseScript, Test {
             );
 
         console2.log("webAuthnAccountFactory", address(webAuthnAccountFactory));
-
-        PaperRockScissor721 paperRockScissor721 = new PaperRockScissor721(
-            "preAlpha-PaperRockScissor721",
-            "PAPRS721"
-        );
-        console2.log("PaperRockScissor721", address(paperRockScissor721));
-
-        Tictactoe721 tictactoe721 = new Tictactoe721(
-            "preAlpha-Tictactoe721",
-            "PATTT721"
-        );
-        console2.log("Tictactoe721", address(tictactoe721));
-
-        TestProducts721 testProducts721 = new TestProducts721(
-            "preAlpha-TestProducts721",
-            "PATP721"
-        );
-        console2.log("TestProducts721", address(testProducts721));
-
-        // ERCs 20
-        TestErc20 wbtc = new TestErc20("Mocked Bitcoin", "WBTC");
-        console2.log("WBTC", address(wbtc));
-
-        TestErc20 usdt = new TestErc20("Mocked Tether USD", "USDT");
-        console2.log("USDT", address(usdt));
 
 
         // Paymaster paymaster = new Paymaster(entryPoint, msg.sender);
@@ -78,12 +50,7 @@ contract DeployAnvil is BaseScript, Test {
             address(entryPoint),
             webAuthnAddr,
             // address(paymaster),
-            address(webAuthnAccountFactory),
-            address(paperRockScissor721),
-            address(tictactoe721),
-            address(testProducts721),
-            address(wbtc),
-            address(usdt)
+            address(webAuthnAccountFactory)
         ];
     }
 }

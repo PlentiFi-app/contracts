@@ -7,7 +7,7 @@ pragma solidity ^0.8.23;
 import "@account-abstraction/contracts/core/BasePaymaster.sol";
 import "@account-abstraction/contracts/interfaces/UserOperation.sol";
 import "@account-abstraction/contracts/core/Helpers.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 // import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 /**

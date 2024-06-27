@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.23;
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721} from "openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 // each call of increment will mint a new token
 contract Increment721 is ERC721 {

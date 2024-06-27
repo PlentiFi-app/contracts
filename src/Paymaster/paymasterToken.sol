@@ -2,8 +2,8 @@
 pragma solidity ^0.8.23;
 
 // Import the required libraries and contracts
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin/contracts/access/Ownable.sol";
 
 contract PaymasterErc20 is ERC20, Ownable {
 
