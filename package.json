@@ -24,7 +24,13 @@
   },
   "license": "",
   "dependencies": {
+    "erc7579-implementation": "^0.3.1",
     "prettier": "^2.8.8",
-    "solhint-community": "^3.7.0-rc01"
+    "solhint-community": "^3.7.0-rc01",
+    "@rhinestone/sentinellist": "github:rhinestonewtf/sentinellist",
+    "account-abstraction": "github:eth-infinitism/account-abstraction#develop",
+    "ds-test": "github:dapphub/ds-test",
+    "forge-std": "github:foundry-rs/forge-std",
+    "solady": "github:vectorized/solady"
   }
 }

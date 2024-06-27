@@ -4,13 +4,13 @@ pragma solidity ^0.8.23;
 // import {Test} from "@forge-std/Test.sol";
 // import { console } from "@forge-std/console.sol";
 import {WebAuthn256r1} from "../Lib/WebAuthn256r1.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {BaseAccount} from "@account-abstraction/contracts/core/BaseAccount.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {IEntryPoint} from "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {UserOperation} from "@account-abstraction/contracts/interfaces/UserOperation.sol";
-import {TokenCallbackHandler} from "@account-abstraction/contracts/samples/callback/TokenCallbackHandler.sol";
+import {ECDSA} from "@openzeppelin/utils/cryptography/ECDSA.sol";
+import {BaseAccount} from "@account-abstraction/core/BaseAccount.sol";
+import {Initializable} from "@openzeppelin/proxy/utils/Initializable.sol";
+import {IEntryPoint} from "@account-abstraction/interfaces/IEntryPoint.sol";
+import {UUPSUpgradeable} from "@openzeppelin/proxy/utils/UUPSUpgradeable.sol";
+import {UserOperation} from "@account-abstraction/interfaces/UserOperation.sol";
+import {TokenCallbackHandler} from "@account-abstraction/samples/callback/TokenCallbackHandler.sol";
 
 /// @title Minimalist 4337 Account with WebAuthn support
 /// @custom:experimental DO NOT USE IT IN PRODUCTION
@@ -31,6 +31,8 @@ contract WebAuthnAccount is
     mapping(bytes => uint256[2]) private _webAuthnSigners;
     mapping(address => bool) public _isEthereumSigner;
 
+    IEntryPoint private immutable _entryPoint;
+
     enum SignatureTypes {
         NONE,
         WEBAUTHN_UNPACKED,
@@ -39,7 +41,6 @@ contract WebAuthnAccount is
         ETHEREUM
     }
 
-    IEntryPoint private immutable _entryPoint;
 
     event WebAuthnAccountInitialized(
         IEntryPoint indexed entryPoint,

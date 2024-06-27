@@ -16,6 +16,17 @@
   solc = "0.8.23"
   src = "src"
   test = "test"
+  remappings = [
+    "@account-abstraction/=node_modules/account-abstraction/contracts/",
+    "@openzeppelin/=node_modules/@openzeppelin/contracts/",
+    "erc7579-implementation/=node_modules/erc7579-implementation/src/",
+    "sentinellist/=node_modules/@rhinestone/sentinellist/src/",
+    "forge-std/=/home/elli/Documents/plentifi/clean/contracts/lib/forge-std/src/",
+    "solady/=/home/elli/Documents/plentifi/clean/contracts/lib/solady/src/",
+    "ds-test/=/home/elli/Documents/plentifi/clean/contracts/lib/forge-std/lib/ds-test/src/",
+    "erc4626-tests/=/home/elli/Documents/plentifi/clean/contracts/lib/openzeppelin-contracts/lib/erc4626-tests/",
+    "src/=src/"
+  ]
 
 [profile.ci]
   fuzz = { runs = 10_000 }
