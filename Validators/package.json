@@ -1,0 +1,33 @@
+{
+  "name": "plentifi-smart-account",
+  "version": "0.0.1",
+  "description": "",
+  "author": "elli610",
+  "repository": "https://github.com/PlentiFi-app/contracts",
+  "bugs": "https://github.com/PlentiFi-app/contracts/issues",
+  "homepage": "https://github.com/PlentiFi-app/contracts#readme",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "engines": {
+    "node": ">= 18"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prettier": "prettier --check \"**/*.{json,md,yml}\"",
+    "prettier:fix": "prettier --check \"**/*.{json,md,yml}\"",
+    "solhint": "solhint {script,src,test}/**/*.sol",
+    "solhint:fix": "solhint {script,src,test}/**/*.sol --fix",
+    "fmt": "forge fmt --check",
+    "fmt:fix": "forge fmt"
+  },
+  "license": "GPL-3.0-only",
+  "dependencies": {
+    "@rhinestone/sentinellist": "github:rhinestonewtf/sentinellist",
+    "account-abstraction": "github:eth-infinitism/account-abstraction#develop",
+    "ds-test": "github:dapphub/ds-test",
+    "forge-std": "github:foundry-rs/forge-std",
+    "solady": "github:vectorized/solady"
+  }
+}

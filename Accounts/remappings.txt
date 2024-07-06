@@ -1,0 +1,5 @@
+ExcessivelySafeCall/=lib/ExcessivelySafeCall/src/
+forge-std/=lib/forge-std/src/
+solady/=lib/solady/src/
+openzeppelin/=lib/openzeppelin-contracts/
+account-abstraction/=lib/account-abstraction-0.7.0/
