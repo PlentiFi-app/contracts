@@ -9,7 +9,7 @@ import "@account-abstraction/contracts/interfaces/UserOperation.sol";
 import "@account-abstraction/contracts/core/Helpers.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-// import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+
 /**
  * A sample paymaster that uses external service to decide whether to pay for the UserOp.
  * The paymaster trusts an external signer to sign the transaction.
@@ -58,6 +58,13 @@ contract Paymaster is BasePaymaster {
      * it is called on-chain from the validatePaymasterUserOp, to validate the signature.
      * note that this signature covers all fields of the UserOperation, except the "paymasterAndData",
      * which will carry the signature itself.
+     * 
+     * @param userOp the UserOperation to sign
+     * @param ethMaxCost the maximum cost of the operation in wei
+     * @param validUntil the time until which the signature is valid
+     * @param validAfter the time after which the signature is valid
+     * 
+     * @return hash the hash to sign
      */
     function getHash(
         UserOperation calldata userOp,
@@ -83,6 +90,16 @@ contract Paymaster is BasePaymaster {
             );
     }
 
+    /**
+     * Parse the paymasterAndData field, which contains the signature and other data.
+     * 
+     * @param paymasterAndData the paymasterAndData field from the UserOperation
+     * 
+     * @return  validUntil the time until which the signature is valid
+     * @return  validAfter the time after which the signature is valid
+     * @return  ethMaxCostAllowed the maximum cost of the operation in wei
+     * @return  signature the signature of the UserOperation
+     */
     function parsePaymasterAndData(
         bytes calldata paymasterAndData
     )
@@ -102,6 +119,14 @@ contract Paymaster is BasePaymaster {
         );
     }
 
+    /**
+     * Validate the UserOperation, by checking the signature.
+     * 
+     * @param userOp the UserOperation to validate
+     * @param maxCost the maximum cost of the operation in wei
+     * 
+     * @return context the context to pass to the post op
+     */
     function _validatePaymasterUserOp(
         UserOperation calldata userOp,
         bytes32, // userOpHash

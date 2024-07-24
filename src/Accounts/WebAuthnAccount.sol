@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
-// import {Test} from "@forge-std/Test.sol";
-// import { console } from "@forge-std/console.sol";
 import {WebAuthn256r1} from "../Lib/WebAuthn256r1.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {BaseAccount} from "@account-abstraction/contracts/core/BaseAccount.sol";
@@ -102,6 +100,12 @@ contract WebAuthnAccount is
 
     /**
      * execute a transaction (called directly from owner, or by entryPoint)
+     *
+     * @param dest the target address
+     * @param value the value to send
+     * @param func the calldata
+     *
+     * @notice this function is not meant to be called directly by the user
      */
     function execute(
         address dest,
@@ -138,18 +142,29 @@ contract WebAuthnAccount is
         }
     }
 
-    // todo: add security aroiund signers management so if a signer is compromised, it cannot easily remove the others
+    // todo: add security arround signers management (with sudo validator) so if a signer is compromised, it cannot easily remove the others
 
     /* ------------------- WebAuthn signers ------------------- */
 
-    function getWebAuthnSigner(bytes calldata credId)
-        external
-        view
-        returns (bytes memory)
-    {
+    /**
+     * get the public key of a WebAuthn signer
+     *
+     * @param credId the credentialId of the signer
+     *
+     * @return the public key of the signer
+     */
+    function getWebAuthnSigner(
+        bytes calldata credId
+    ) external view returns (bytes memory) {
         return abi.encodePacked(_webAuthnSigners[credId]);
     }
 
+    /**
+     * add a WebAuthn signer
+     *
+     * @param credId the credentialId of the signer
+     * @param pubKeyCoordinates the public key of the signer
+     */
     function addSigner(
         bytes calldata credId,
         uint256[2] calldata pubKeyCoordinates
@@ -157,6 +172,12 @@ contract WebAuthnAccount is
         _addSigner(credId, pubKeyCoordinates);
     }
 
+    /**
+     * add the first WebAuthn signer
+     *
+     * @param credId the credentialId of the signer
+     * @param pubKeyCoordinates the public key of the signer
+     */
     function addFirstSigner(
         bytes calldata credId,
         uint256[2] calldata pubKeyCoordinates
@@ -165,6 +186,12 @@ contract WebAuthnAccount is
         _addSigner(credId, pubKeyCoordinates);
     }
 
+    /**
+     * add the first WebAuthn signer from the login service
+     *
+     * @param credId the credentialId of the signer
+     * @param pubKeyCoordinates the public key of the signer
+     */
     function _addSigner(
         bytes memory credId,
         uint256[2] memory pubKeyCoordinates
@@ -173,6 +200,14 @@ contract WebAuthnAccount is
         _signersCount++;
     }
 
+    /**
+     * add the first WebAuthn signer from the login service
+     *
+     * @param credId the credentialId of the signer
+     * @param pubKeyCoordinates the public key of the signer
+     * @param serviceSignature the signature from the login service
+     * @param dryRun if true, the function will not modify the state
+     */
     function _addFirstSignerFromLoginService(
         bytes memory credId,
         uint256[2] memory pubKeyCoordinates,
@@ -205,6 +240,11 @@ contract WebAuthnAccount is
         _addSigner(credId, pubKeyCoordinates);
     }
 
+    /**
+     * remove a WebAuthn signer
+     *
+     * @param credId the credentialId of the signer
+     */
     function removeSigner(bytes calldata credId) external onlyOwner {
         // todo: test
         delete _webAuthnSigners[credId];
@@ -215,11 +255,21 @@ contract WebAuthnAccount is
 
     /* ------------------- Ethereum signers ------------------- */
 
+    /**
+     * add an Ethereum signer
+     *
+     * @param signer the address of the signer
+     */
     function addEthereumSigner(address signer) external onlyOwner {
         // todo: test
         _addEthereumSigner(signer);
     }
 
+    /**
+     * add the first Ethereum signer
+     *
+     * @param signer the address of the signer
+     */
     function addFirstEthereumSigner(
         // todo: test
         address signer
@@ -228,16 +278,24 @@ contract WebAuthnAccount is
         _addEthereumSigner(signer);
     }
 
-    function _addEthereumSigner(
-        // todo: test
-        address signer
-    ) internal {
+    /**
+     * add the first Ethereum signer from the login service
+     *
+     * @param signer the address of the signer
+     */
+    function _addEthereumSigner(address signer) internal {
         _isEthereumSigner[signer] = true;
         _signersCount++;
     }
 
+    /**
+     * add the first Ethereum signer from the login service
+     *
+     * @param signer the address of the signer
+     * @param serviceSignature the signature from the login service
+     * @param dryRun if true, the function will not modify the state
+     */
     function _addFirstEthereumSignerFromLoginService(
-        // todo: test
         address signer,
         bytes memory serviceSignature,
         bool dryRun
@@ -267,6 +325,11 @@ contract WebAuthnAccount is
         _addEthereumSigner(signer);
     }
 
+    /**
+     * remove an Ethereum signer
+     *
+     * @param signer the address of the signer
+     */
     function removeEthereumSigner(address signer) external onlyOwner {
         // todo: test
         delete _isEthereumSigner[signer];
@@ -294,7 +357,9 @@ contract WebAuthnAccount is
         );
     }
 
-    /// implement template method of BaseAccount
+    /**
+     * @inheritdoc BaseAccount
+     */
     function _validateSignature(
         UserOperation calldata userOp,
         bytes32 userOpHash
@@ -349,6 +414,13 @@ contract WebAuthnAccount is
         revert("unsupported signature type"); // todo: test
     }
 
+    /**
+     * calls the target with the specified native currency value and calldata
+     *
+     * @param target the target address
+     * @param value the value to send
+     * @param data the calldata
+     */
     function _call(address target, uint256 value, bytes memory data) internal {
         (bool success, bytes memory result) = target.call{value: value}(data);
         if (!success) {
@@ -358,6 +430,9 @@ contract WebAuthnAccount is
         }
     }
 
+    /**
+     * slice a bytes array from start to end
+     */
     function sliceBytes(
         bytes calldata toSlice,
         uint256 start,
@@ -399,6 +474,13 @@ contract WebAuthnAccount is
         _onlyOwner();
     }
 
+    /**
+     * Validates a WebAuthn signature along with a Login Service signature
+     *
+     * @param signature the bytes containning the signatures to validate
+     * @param userOpHash the hash of the UserOperation
+     * @param dryRun if true, the function will not modify the state
+     */
     function _validateWebAuthnWithLoginServiceSignature(
         bytes memory signature,
         bytes32 userOpHash,
@@ -484,6 +566,13 @@ contract WebAuthnAccount is
         return 0;
     }
 
+    /**
+     * Validates a WebAuthn signature
+     *
+     * @param signature the bytes containning the signature to validate
+     * @param userOpHash the hash of the UserOperation
+     * @param dryRun if true, the function will not modify the state
+     */
     function _validateWebAuthnSignature(
         bytes memory signature,
         bytes32 userOpHash,
@@ -530,6 +619,11 @@ contract WebAuthnAccount is
         return 0;
     }
 
+    /**
+     * Validates a Login Service signature
+     *
+     * @param signature the bytes containning the signature to validate
+     */
     function _validateLoginServiceOnlySignature(
         bytes memory signature
     ) internal returns (uint256 validationData) {
@@ -560,7 +654,14 @@ contract WebAuthnAccount is
         return 0;
     }
 
-    function _validateEthereumSignature(  // todo: test
+    /**
+     * Validates an Ethereum signature
+     *
+     * @param signature the bytes containning the signature to validate
+     * @param userOpHash the hash of the UserOperation
+     */
+    function _validateEthereumSignature(
+        // todo: test
         bytes memory signature,
         bytes32 userOpHash
     ) internal view returns (uint256 validationData) {
@@ -594,6 +695,20 @@ contract WebAuthnAccount is
         return 0;
     }
 
+    /**
+     * Parses a WebAuthn signature
+     *
+     * @param data the bytes containning the signature
+     * @return signatureType
+     * @return authenticatorDataFlagMask
+     * @return authenticatorData
+     * @return clientData
+     * @return clientChallenge
+     * @return clientChallengeOffset
+     * @return r
+     * @return s
+     * @return loginServiceData
+     */
     function _parseWebauthnWithLoginServiceSignature(
         bytes memory data
     )
@@ -628,6 +743,20 @@ contract WebAuthnAccount is
             );
     }
 
+    /**
+     * Parses a WebAuthn signature
+     *
+     * @param data the bytes containning the signature
+     * @return signatureType
+     * @return authenticatorDataFlagMask
+     * @return authenticatorData
+     * @return clientData
+     * @return clientChallenge
+     * @return clientChallengeOffset
+     * @return r
+     * @return s
+     * @return credId
+     */
     function _parseWebauthnSignature(
         bytes memory data
     )
@@ -662,6 +791,16 @@ contract WebAuthnAccount is
             );
     }
 
+    /**
+     * Parses a Login Service signature
+     *
+     * @param loginServiceData the bytes containning the signature
+     * @return signatureType
+     * @return login
+     * @return credId
+     * @return pubKeyCoordinates
+     * @return signature
+     */
     function _parseLoginServiceData(
         bytes memory loginServiceData
     )
@@ -682,6 +821,14 @@ contract WebAuthnAccount is
             );
     }
 
+    /**
+     * Parses an Ethereum signature
+     *
+     * @param signatureData the bytes containning the signature
+     * @return signatureType
+     * @return login
+     * @return signature
+     */
     function _parseEthereumSignatureData(
         bytes memory signatureData
     )
