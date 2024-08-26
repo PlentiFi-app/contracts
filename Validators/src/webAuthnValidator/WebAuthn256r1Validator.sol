@@ -7,7 +7,7 @@ import {p, a, gx, gy, gpow2p128_x, gpow2p128_y, n} from "./SCL/fields/SCL_secp25
 
 import {IValidator, IModule, PackedUserOperation} from "../interfaces/IERC7579Modules.sol";
 import {SclVerifier} from "./SclVerifier.sol";
-import {ERC1271_MAGICVALUE, ERC1271_INVALID, MODULE_TYPE_VALIDATOR, SIG_VALIDATION_SUCCESS_UINT} from "./constants.sol";
+import {ERC1271_MAGICVALUE, ERC1271_INVALID, MODULE_TYPE_VALIDATOR, SIG_VALIDATION_SUCCESS_UINT} from "../constants.sol";
 
 contract WebAuthn256r1Validator is IValidator {
     bytes32 public constant initializedKey = bytes32(0);

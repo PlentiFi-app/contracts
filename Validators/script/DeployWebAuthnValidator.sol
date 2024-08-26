@@ -8,7 +8,7 @@ import "forge-std/Script.sol";
 
 // address deployer: 0xaF06998b48c1cC58261c26dfAe284228C7A65bDF
 // command:
-// forge script script/test.sol --broadcast -vvv --rpc-url http://127.0.0.1:7545 --private-key 0x0fc0ab06c0fc17a38ea266f58927c85384e9f4a9f12f42513d15d7c0317acb03
+// forge script script/test.sol --broadcast -vvv --rpc-url http://127.0.0.1:7545 --private-key 
 contract DeployAll is Script {
     function run() external {
         vm.startBroadcast();

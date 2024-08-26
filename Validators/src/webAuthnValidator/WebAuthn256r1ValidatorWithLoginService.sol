@@ -9,7 +9,7 @@ import {IValidator, IModule, PackedUserOperation} from "../interfaces/IERC7579Mo
 import {SclVerifier} from "./SclVerifier.sol";
 import {Ownable} from "@openzeppelin/access/Ownable.sol";
 import {ECDSA} from "@openzeppelin/utils/cryptography/ECDSA.sol";
-import {ERC1271_MAGICVALUE, ERC1271_INVALID, MODULE_TYPE_VALIDATOR, SIG_VALIDATION_SUCCESS_UINT} from "./constants.sol";
+import {ERC1271_MAGICVALUE, ERC1271_INVALID, MODULE_TYPE_VALIDATOR, SIG_VALIDATION_SUCCESS_UINT} from "../constants.sol";
 
 enum SignatureTypes {
     WEBAUTHN, // used to validate webauthn login requests
@@ -78,6 +78,7 @@ contract WebAuthn256r1ValidatorWithLoginService is IValidator, Ownable {
      * @inheritdoc IValidator
      */
     function isValidSignatureWithSender(
+        // todo: verify login service sig (if the account has not been deployed yet)
         address sender,
         bytes32 hash,
         bytes calldata data
@@ -96,6 +97,8 @@ contract WebAuthn256r1ValidatorWithLoginService is IValidator, Ownable {
      * @inheritdoc IModule
      */
     function onInstall(bytes calldata data) external payable override {
+        // looks like we do not need to check login service sig since it will be checked in the validateUserOp function once account is initialized
+
         // set initialized to true
         initialized[msg.sender] = true;
 
@@ -164,9 +167,7 @@ contract WebAuthn256r1ValidatorWithLoginService is IValidator, Ownable {
         }
     }
 
-    function removeSigners(bytes calldata data) external {
-        bytes32[] memory credIds = abi.decode(data, (bytes32[]));
-
+    function removeSigners(bytes32[] calldata credIds) external {
         for (uint256 i = 0; i < credIds.length; i++) {
             _removeSigner(credIds[i]);
         }
