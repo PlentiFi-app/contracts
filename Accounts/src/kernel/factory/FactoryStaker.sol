@@ -15,6 +15,12 @@ contract FactoryStaker is Ownable {
         _initializeOwner(_owner);
     }
 
+    // //////////// 
+    // function createAccount(address factory, bytes calldata data, bytes32 salt) external payable returns (address) {
+    //     return deployWithFactory(KernelFactory(factory), data, salt);
+    // }   
+    // ////////////
+
     function deployWithFactory(KernelFactory factory, bytes calldata createData, bytes32 salt)
         external
         payable

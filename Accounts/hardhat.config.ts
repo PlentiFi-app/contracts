@@ -43,7 +43,7 @@ import "@nomicfoundation/hardhat-foundry";
 import { HardhatUserConfig } from "hardhat/config";
 import "hardhat-spdx-license-identifier";
 import "hardhat-contract-sizer";
-
+import 'hardhat-deploy';
 import "dotenv/config";
 
 const config: HardhatUserConfig = {
@@ -96,6 +96,10 @@ const config: HardhatUserConfig = {
   networks: {
     local: {
       url: process.env.NETWORK_URL,
+      accounts: [process.env.PRIVATE_KEY!],
+    },
+    arbitrumSepolia: {
+      url: process.env.ARBITRUM_SEPOLIA_URL,
       accounts: [process.env.PRIVATE_KEY!],
     },
   },

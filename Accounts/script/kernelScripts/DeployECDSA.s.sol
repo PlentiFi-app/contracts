@@ -5,13 +5,15 @@ import "forge-std/console.sol";
 
 import "src/kernel/validator/ECDSAValidator.sol";
 
+// forge script script/kernelScripts/DeployECDSA.s.sol --broadcast -vvv --rpc-url <rpcUrl> --private-key 
 contract DeployValidators is Script {
-    address constant DEPLOYER = 0x9775137314fE595c943712B0b336327dfa80aE8A;
+    // address constant DEPLOYER = 0x9775137314fE595c943712B0b336327dfa80aE8A;
 
     function run() external {
-        vm.startBroadcast(DEPLOYER);
+        vm.startBroadcast(/* DEPLOYER */);
         ECDSAValidator validator = new ECDSAValidator{salt: 0}();
         console.log("ECDSA :", address(validator));
         vm.stopBroadcast();
     }
 }
+

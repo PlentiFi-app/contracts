@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.23;
 
-import {Ownable} from "../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import {Ownable} from "openzeppelin/contracts/access/Ownable.sol";
 import {FirstImplementation} from "./FirstImplementation.sol";
 import {IImplementationManager} from "./interfaces/IImplementationManager.sol";
 

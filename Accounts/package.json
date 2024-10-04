@@ -24,6 +24,7 @@
     "ethers": "^6.13.1",
     "hardhat": "^2.22.2",
     "hardhat-contract-sizer": "^2.10.0",
+    "hardhat-deploy": "^0.12.4",
     "hardhat-gas-reporter": "^1.0.8",
     "hardhat-spdx-license-identifier": "^2.2.0",
     "solidity-coverage": "^0.8.1",

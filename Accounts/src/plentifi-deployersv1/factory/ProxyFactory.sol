@@ -3,17 +3,17 @@
 pragma solidity ^0.8.21;
 
 // import {LibClone} from "solady/utils/LibClone.sol";
-import {IImplementationManager} from "./interfaces/IImplementationManager.sol";
+import {IImplementationManager} from "../interfaces/IImplementationManager.sol";
 import {Create2} from "openzeppelin/contracts/utils/Create2.sol";
-import {IFirstImplementation} from "./interfaces/IFirstImplementation.sol";
-import {Kernel} from "../kernel/Kernel.sol";
+import {IFirstImplementation} from "../interfaces/IFirstImplementation.sol";
+import {Kernel} from "../../kernel/Kernel.sol";
 import {ERC1967Proxy} from "openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Initializable} from "openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {ProxyUpgrader} from "./ProxyUpgrader.sol";
+import {ProxyUpgrader} from "../ProxyUpgrader.sol";
 
-import {IHook} from "../kernel/interfaces/IERC7579Modules.sol";
-import {ValidationId} from "../kernel/core/ValidationManager.sol";
+import {IHook} from "../../kernel/interfaces/IERC7579Modules.sol";
+import {ValidationId} from "../../kernel/core/ValidationManager.sol";
 
 contract ProxyFactory {
     string public constant versionId = "ProxyFactory-v0.0.1";
@@ -38,8 +38,6 @@ contract ProxyFactory {
         if (codeSize > 0) {
             return address(payable(addr));
         }
-
-        // TODO: LA FACTORY DOIT PASSER PAR UN DEPLOYER (COMME LE SCDEPLOYER ) POUR QUE PEUT IMPORTE LA VERSION DE FACTORY, LES CONTRATS DEPLOYÉS AIENT LA MEME ADDRESSE
 
         IFirstImplementation proxy = IFirstImplementation(
             address(new ERC1967Proxy{salt : _getSalt(login, salt)}(address(firstImplementation), ""))

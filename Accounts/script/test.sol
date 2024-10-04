@@ -3,12 +3,12 @@ pragma solidity ^0.8.0;
 
 import {IEntryPoint} from "../src/kernel/interfaces/IEntryPoint.sol";
 import {IPlentiFiContractDeployer} from "./interfaces/IPlentiFiContractDeployer.sol";
-import {FirstImplementation} from "../src/plentifi/FirstImplementation.sol";
-import {ProxyFactory} from "../src/plentifi/ProxyFactory.sol";
-import {ImplementationManager} from "../src/plentifi/ImplementationManager.sol";
+import {FirstImplementation} from "../src/plentifi-deployersv1/FirstImplementation.sol";
+import {ProxyFactory} from "../src/plentifi-deployersv1/factory/ProxyFactory.sol";
+import {ImplementationManager} from "../src/plentifi-deployersv1/ImplementationManager.sol";
 import {Kernel} from "../src/kernel/Kernel.sol";
 import {ValidationId} from "../src/kernel/core/ValidationManager.sol";
-import {ProxyUpgrader} from "../src/plentifi/ProxyUpgrader.sol";
+import {ProxyUpgrader} from "../src/plentifi-deployersv1/ProxyUpgrader.sol";
 import {IHook} from "../src/kernel/interfaces/IERC7579Modules.sol";
 import {MockValidator} from "../src/kernel/mock/MockValidator.sol";
 import{ValidatorLib} from "../src/kernel/utils/ValidationTypeLib.sol";
@@ -16,7 +16,7 @@ import "forge-std/Script.sol";
 
 // address deployer: 0xaF06998b48c1cC58261c26dfAe284228C7A65bDF
 // command:
-// forge script script/test.sol --broadcast -vvv --rpc-url http://127.0.0.1:7545 --private-key 0x0fc0ab06c0fc17a38ea266f58927c85384e9f4a9f12f42513d15d7c0317acb03
+// forge script script/test.sol --broadcast -vvv --rpc-url http://127.0.0.1:7545 --private-key 
 contract DeployAll is Script {
     function run() external {
         vm.startBroadcast();
@@ -29,8 +29,10 @@ contract DeployAll is Script {
         // deploy the proxyUpgrader
         ProxyUpgrader proxyUpgrader = new ProxyUpgrader();
 
+        address owner = 0x329A76707745586b2992a6837918a8d2b73Dfd3f;
+
         // deploy the implementationManager
-        ImplementationManager implementationManager = new ImplementationManager();
+        ImplementationManager implementationManager = new ImplementationManager(owner);
 
         // initialize the implementationManager
         implementationManager.initialize(
