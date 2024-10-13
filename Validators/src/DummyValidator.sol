@@ -16,6 +16,8 @@ contract DummyValidator is IValidator {
     event SignerAdded(address indexed smartAccount, bytes32 indexed credId);
     event SignerRemoved(address indexed smartAccount, bytes32 indexed credId);
 
+    event DataEvent(uint256 id, bytes data);
+
     constructor() {}
 
     /**
@@ -25,28 +27,17 @@ contract DummyValidator is IValidator {
         PackedUserOperation calldata userOp,
         bytes32
     ) external payable returns (uint256) {
+        emit DataEvent(99999, userOp.signature);
 
-      bytes memory validSignature = new bytes(1);
+        //   bytes memory validSignature = new bytes(1);
 
-      validSignature[0] = 0x12;
+        //   validSignature[0] = 0x12;
 
-        if (compareBytes(validSignature, userOp.signature)) {
-            return SIG_VALIDATION_SUCCESS_UINT;
-        }
-        return SIG_VALIDATION_FAILED_UINT;
+        // if (compareBytes(validSignature, userOp.signature)) {
+        return SIG_VALIDATION_SUCCESS_UINT;
+        // }
+        // return SIG_VALIDATION_FAILED_UINT;
     }
-
-    //////////////////////
-    function test(bytes calldata data) external pure returns (bool) {
-        
-      bytes memory validSignature = new bytes(1);
-
-      validSignature[0] = 0x12;
-
-       return compareBytes(validSignature, data);
-   
-    }
-    //////////////////////
 
     /**
      * @inheritdoc IValidator
@@ -56,45 +47,52 @@ contract DummyValidator is IValidator {
         bytes32,
         bytes calldata data
     ) external pure returns (bytes4) {
-        bytes memory validSignature = new bytes(1);
 
-        validSignature[0] = 0x34;
+        // emit DataEvent("isValidSignatureWithSender", data);
 
-        if (compareBytes(validSignature, data)) {
-            return ERC1271_MAGICVALUE;
-        } else {
-            return ERC1271_INVALID;
-        }
+        // bytes memory validSignature = new bytes(1);
+
+        // validSignature[0] = 0x34;
+
+        // if (compareBytes(validSignature, data)) {
+        return ERC1271_MAGICVALUE;
+        // } else {
+        //     return ERC1271_INVALID;
+        // }
     }
 
     /**
      * @inheritdoc IModule
      */
     function onInstall(bytes calldata data) external payable override {
-      bytes memory validData = new bytes(1);
+        emit DataEvent(88888,  data);
 
-      validData[0] = 0x56;
+        // bytes memory validData = new bytes(1);
 
-        if (compareBytes(validData, data)) {
+        // validData[0] = 0x56;
+
+        // if (compareBytes(validData, data)) {
             initialized[msg.sender] = true;
-        }
+        // }
 
-        revert("Dummy validator: Invalid install data");
+        // revert("Dummy validator: Invalid install data");
     }
 
     /**
      * @inheritdoc IModule
      */
     function onUninstall(bytes calldata data) external payable override {
-      bytes memory validData = new bytes(1);
+        emit DataEvent(77777, data);
 
-      validData[0] = 0x78;
+        // bytes memory validData = new bytes(1);
 
-        if (compareBytes(validData, data)) {
+        // validData[0] = 0x78;
+
+        // if (compareBytes(validData, data)) {
             delete initialized[msg.sender];
-        }
+        // }
 
-        revert("Dummy validator: Invalid uninstall data");
+        // revert("Dummy validator: Invalid uninstall data");
     }
 
     /**
@@ -111,20 +109,23 @@ contract DummyValidator is IValidator {
         return initialized[smartAccount];
     }
 
-    function compareBytes(bytes memory storageBytes, bytes calldata calldataBytes) public pure returns (bool) {
-        // Check if the lengths are the same
-        if (storageBytes.length != calldataBytes.length) {
-            return false;
-        }
-        
-        // Compare each byte
-        for (uint i = 0; i < storageBytes.length; i++) {
-            if (storageBytes[i] != calldataBytes[i]) {
-                return false;
-            }
-        }
-        
-        // All bytes are the same
-        return true;
-    }
+    // function compareBytes(
+    //     bytes memory storageBytes,
+    //     bytes calldata calldataBytes
+    // ) public pure returns (bool) {
+    //     // Check if the lengths are the same
+    //     if (storageBytes.length != calldataBytes.length) {
+    //         return false;
+    //     }
+
+    //     // Compare each byte
+    //     for (uint i = 0; i < storageBytes.length; i++) {
+    //         if (storageBytes[i] != calldataBytes[i]) {
+    //             return false;
+    //         }
+    //     }
+
+    //     // All bytes are the same
+    //     return true;
+    // }
 }

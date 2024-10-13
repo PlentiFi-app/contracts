@@ -9,18 +9,21 @@ import {Create2} from "openzeppelin/contracts/utils/Create2.sol";
 import {LibClone} from "solady/utils/LibClone.sol";
 import {ProxyUpgrader} from "../ProxyUpgrader.sol";
 
-contract KernelFactory {
+contract PlentiFiAccountFactory {
     error InitializeError();
 
-    string public constant versionId = "Plentifi-mainProxyFactory-v0.0.2";
+    string public constant versionId = "PlentiFi-AccountFactory-v0.0.2";
     IFirstImplementation public immutable firstImplementation;
     IImplementationManager public immutable implementationManager;
 
+    string public constant id;
+
     event AccountCreated(address indexed account, bytes32 salt);
 
-    constructor(address implementationManager_, address firstImplementation_) {
+    constructor(address implementationManager_, address firstImplementation_, string memory id_) {
         implementationManager = IImplementationManager(implementationManager_);
         firstImplementation = IFirstImplementation(firstImplementation_);
+        assign id (custom identifier for special purpose factories)
     }
 
     function createAccount(

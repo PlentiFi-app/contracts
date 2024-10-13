@@ -7,11 +7,11 @@ import "../../kernel/interfaces/IEntryPoint.sol";
 import "solady/auth/Ownable.sol";
 
 contract PlentifiFactoryStaker is Ownable {
-    string public constant versionId = "StakerFactory-v0.0.1";
+    string public constant versionId = "PlentiFi-StakerFactory-v0.0.1";
 
     bool public locked;
 
-    mapping(KernelFactory => bool) public approved;
+    mapping(PlentiFiAccountFactory => bool) public approved;
 
     error NotApprovedFactory();
     error Locked();
@@ -22,7 +22,7 @@ contract PlentifiFactoryStaker is Ownable {
     }
 
     function deployWithFactory(
-        KernelFactory factory,
+        PlentiFiAccountFactory factory,
         bytes calldata createData,
         bytes32 salt
     )
@@ -43,7 +43,7 @@ contract PlentifiFactoryStaker is Ownable {
     }
 
     function approveFactory(
-        KernelFactory factory,
+        PlentiFiAccountFactory factory,
         bool approval
     ) external payable onlyOwner {
         approved[factory] = approval;
