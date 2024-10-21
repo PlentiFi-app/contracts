@@ -16,14 +16,25 @@ contract PlentiFiAccountFactory {
     IFirstImplementation public immutable firstImplementation;
     IImplementationManager public immutable implementationManager;
 
-    string public constant id;
+    // the custom identifier for special purpose factories
+    bytes32 public immutable ID;
 
     event AccountCreated(address indexed account, bytes32 salt);
 
-    constructor(address implementationManager_, address firstImplementation_, string memory id_) {
+    /**
+     * @param implementationManager_ the implementation manager contract
+     * @param firstImplementation_ the first implementation contract
+     * @param id_ the custom identifier for special purpose factories
+     */
+    constructor(
+        address implementationManager_,
+        address firstImplementation_,
+        bytes32 id_
+    ) {
         implementationManager = IImplementationManager(implementationManager_);
         firstImplementation = IFirstImplementation(firstImplementation_);
-        assign id (custom identifier for special purpose factories)
+
+        ID = id_;
     }
 
     function createAccount(
@@ -61,14 +72,35 @@ contract PlentiFiAccountFactory {
      * calculate the counterfactual address of this account as it would be returned by createAccount()
      */
     function getAddress(
-        bytes calldata /* data */, // not removed from the kernel factory so the function signature is the same as the one called by the permissionless sdk
+        bytes calldata login,
         bytes32 salt
-    ) public view virtual returns (address) {
+    ) public view returns (address) {
+        bytes32 saltHash = _getSalt(login, salt);
         bytes memory bytecode = abi.encodePacked(
             type(ERC1967Proxy).creationCode,
             abi.encode(address(firstImplementation), "")
         );
 
-        return Create2.computeAddress(salt, keccak256(bytecode), address(this));
+        return
+            Create2.computeAddress(
+                saltHash,
+                keccak256(bytecode),
+                address(this)
+            );
+    }
+
+    // wrapper for getAddress() since with ethers 6, proxyFactoryContract.getAddress(login, salt); returns the factory address
+    function getAddressWrapper(
+        bytes calldata login,
+        bytes32 salt
+    ) public view returns (address) {
+        return getAddress(login, salt);
+    }
+
+    function _getSalt(
+        bytes calldata login,
+        bytes32 _salt
+    ) public pure returns (bytes32 salt) {
+        salt = keccak256(abi.encodePacked(login, _salt));
     }
 }
