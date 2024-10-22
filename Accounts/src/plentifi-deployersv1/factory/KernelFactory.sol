@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import {ERC1967Proxy} from "openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {IImplementationManager} from "../interfaces/IImplementationManager.sol";
-import {IFirstImplementation} from "../interfaces/IFirstImplementation.sol";
+import {FirstImplementation} from "../FirstImplementation.sol";
 import {Create2} from "openzeppelin/contracts/utils/Create2.sol";
 import {LibClone} from "solady/utils/LibClone.sol";
 import {ProxyUpgrader} from "../ProxyUpgrader.sol";
@@ -13,7 +13,7 @@ contract PlentiFiAccountFactory {
     error InitializeError();
 
     string public constant versionId = "PlentiFi-AccountFactory-v0.0.2";
-    IFirstImplementation public immutable firstImplementation;
+    FirstImplementation public immutable firstImplementation;
     IImplementationManager public immutable implementationManager;
 
     // the custom identifier for special purpose factories
@@ -23,16 +23,14 @@ contract PlentiFiAccountFactory {
 
     /**
      * @param implementationManager_ the implementation manager contract
-     * @param firstImplementation_ the first implementation contract
      * @param id_ the custom identifier for special purpose factories
      */
     constructor(
         address implementationManager_,
-        address firstImplementation_,
         bytes32 id_
     ) {
         implementationManager = IImplementationManager(implementationManager_);
-        firstImplementation = IFirstImplementation(firstImplementation_);
+        firstImplementation = new FirstImplementation();
 
         ID = id_;
     }
@@ -48,7 +46,7 @@ contract PlentiFiAccountFactory {
             return address(payable(addr));
         }
 
-        IFirstImplementation proxy = IFirstImplementation(
+        FirstImplementation proxy = FirstImplementation(
             address(
                 new ERC1967Proxy{salt: salt}(address(firstImplementation), "")
             )
