@@ -100,6 +100,8 @@ contract ImplementationManager is Ownable, IImplementationManager {
         isService[_service] = false;
     }
 
+    // initialize the contract. Should be called right after deployment,
+    // before registering the factories in the staker factory
     function initialize(
         address _implementation,
         address _proxyUpgrader,

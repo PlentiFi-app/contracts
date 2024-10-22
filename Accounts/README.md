@@ -28,4 +28,19 @@ Deploy your Account Factory:
 npx hardhat run script/hardhat/deployAccountFactoryDeterministic.ts --network <your_evm_network>
 ```
 
-Then, you'll need to register the Account Factory in the Factory Staker
+### If not already done:
+
+Deploy Kernel:
+```bash
+npx hardhat run script/hardhat/deployKernel.ts --network <your_evm_network>
+```
+
+Deploy the ProxyUpgrader:
+```bash
+npx hardhat run script/hardhat/deployProxyUpgrader.ts --network <your_evm_network>
+```
+
+Then, you'll need to initialize the ImplementationManager and register the Account Factory in the Factory Staker:
+```bash
+npx hardhat run script/postDeployment.ts --network <your_evm_network>
+```

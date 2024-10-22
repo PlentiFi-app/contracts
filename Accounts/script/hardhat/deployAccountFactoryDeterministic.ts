@@ -8,7 +8,7 @@ import 'dotenv/config'
 
 async function main() {
   /* -------------CONSTRUCTOR ARGUMENTS----------------- */
-  const implementationManager = process.env.IMPLEMENTATION_MANAGER_ADDRESS;
+  const implementationManager = process.env.EXPECTED_IMPLEMENTATION_MANAGER_ADDRESS;
   if (!implementationManager) throw new Error('IMPLEMENTATION_ADDRESS not set in env');
   const factory_id = process.env.FACTORY_ID;
   if (!factory_id) throw new Error('FACTORY_ID not set in env');
