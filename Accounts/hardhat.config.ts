@@ -102,6 +102,10 @@ const config: HardhatUserConfig = {
       url: process.env.ARBITRUM_SEPOLIA_URL,
       accounts: [process.env.PRIVATE_KEY!],
     },
+    scrollSepolia: {
+      url: process.env.SCROLL_SEPOLIA_URL,
+      accounts: [process.env.PRIVATE_KEY!],
+    }
   },
 };
 
