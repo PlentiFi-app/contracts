@@ -20,11 +20,12 @@ contract ImplementationManager is Ownable, IImplementationManager {
     address public entryPoint;
     address public proxyUpgrader;
     address public implementation;
-    address public firstImplementation;
+
+    event ImplementationUpdated(address indexed implementation);
+    event EntryPointUpdated(address indexed entryPoint);
+    event ProxyUpgraderUpdated(address indexed proxyUpgrader);
 
     mapping(address => bool) public isService; // allowed to update the implementation and entryPoint
-
-    event FirstImplementationDeployed(address indexed firstImplementation, address indexed owner);
 
     modifier onlyServiceOrOwner() {
         require(isService[msg.sender] || msg.sender == owner(), "Not allowed");
@@ -43,10 +44,7 @@ contract ImplementationManager is Ownable, IImplementationManager {
     }
 
     constructor(address owner) {
-        // deploy the first implementation
-        firstImplementation = address(new FirstImplementation());
         transferOwnership(owner);
-        emit FirstImplementationDeployed(firstImplementation, owner);
     }
 
     function setEntryPoint(
@@ -56,6 +54,8 @@ contract ImplementationManager is Ownable, IImplementationManager {
             revert("Cannot set implementation to address(0)");
         }
         entryPoint = _entryPoint;
+
+        emit EntryPointUpdated(_entryPoint);
     }
 
     function setImplementation(
@@ -65,6 +65,8 @@ contract ImplementationManager is Ownable, IImplementationManager {
             revert("Cannot set implementation to address(0)");
         }
         implementation = _implementation;
+
+        emit ImplementationUpdated(_implementation);
     }
 
     function setProxyUpgrader(
@@ -74,6 +76,8 @@ contract ImplementationManager is Ownable, IImplementationManager {
             revert("Cannot set implementation to address(0)");
         }
         proxyUpgrader = _proxyUpgrader;
+
+        emit ProxyUpgraderUpdated(_proxyUpgrader);
     }
 
     function unlock() external onlyServiceOrOwner {
@@ -106,6 +110,11 @@ contract ImplementationManager is Ownable, IImplementationManager {
         implementation = _implementation;
         proxyUpgrader = _proxyUpgrader;
         entryPoint = _entrypoint;
+
         isInitialized = true;
+
+        emit ImplementationUpdated(_implementation);
+        emit EntryPointUpdated(_entrypoint);
+        emit ProxyUpgraderUpdated(_proxyUpgrader);
     }
 }

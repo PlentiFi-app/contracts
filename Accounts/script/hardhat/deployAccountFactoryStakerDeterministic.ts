@@ -31,11 +31,17 @@ async function main() {
   if (!expectedAddress || expectedAddress !== preComputedAddress) {
     throw new Error('Computed address does not match expected address');
   }
+  // check if the contract is already deployed at this address
+  const code = await ethers.provider.getCode(expectedAddress);
+  if (code !== '0x') {
+    console.log('FactoryStaker already deployed at:', expectedAddress);
+    return;
+  }
 
   // Deploy the PlentiFiFactoryStaker contract using deterministicFactory.deploy(bytes memory bytecode, bytes32 salt)
   const tx = await deterministicFactory.deploy(bytecode, salt);
   const receipt = await tx.wait();
-  
+
   // from the txHash, get the logs and extract the deployed address
   const logs = receipt.logs.map(log => deterministicFactory.interface.parseLog(log))[1].args[0];
 

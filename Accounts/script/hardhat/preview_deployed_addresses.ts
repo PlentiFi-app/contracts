@@ -46,7 +46,7 @@ async function main() {
 
   console.log('FactoryStaker precomputed address:', preComputedFactoryStaker);
   console.log('ImplementationManager precomputed address:', implManagerPreComputedAddress);
-  console.log('Canonical Account Factory precomputed address:', accountFactoryPreComputedAddress);
+  console.log('Canonical PlentiFi Canonical Factory precomputed address:', accountFactoryPreComputedAddress);
 }
 
 main()

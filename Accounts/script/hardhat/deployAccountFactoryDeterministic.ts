@@ -38,6 +38,12 @@ async function main() {
     if (!expectedAddress || expectedAddress !== preComputedAddress) {
       throw new Error('Canonical Factory computed address does not match expected address');
     }
+    // check if the contract is already deployed at this address
+    const code = await ethers.provider.getCode(expectedAddress);
+    if (code !== '0x') {
+      console.log('PlentiFiAccountFactory already deployed at:', expectedAddress);
+      return;
+    }
   } else {
     console.log('factory_id != bytes32(1), Canonical Factory address check skipped, stop now if this is not expected');
     await new Promise(resolve => setTimeout(resolve, 10000));

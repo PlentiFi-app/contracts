@@ -25,7 +25,6 @@ async function main() {
   const bytecode = `${ImplementationManager.bytecode}${constructorArgs.slice(2)}`; // Concatenate bytecode with encoded args
   const salt = keccak256(bytecode);
 
-
   /* -------------ENSURE ADDRESS IS THE EXPECTED ONE----------------- */
   // call computeAddress to ensure the address is the expected one
   const expectedAddress = process.env.EXPECTED_IMPLEMENTATION_MANAGER_ADDRESS;
@@ -34,15 +33,28 @@ async function main() {
   if (!expectedAddress || expectedAddress !== preComputedAddress) {
     throw new Error('ImplementationManager computed address does not match expected address');
   }
+  // check if the contract is already deployed at this address
+  const code = await ethers.provider.getCode(expectedAddress);
+  if (code !== '0x') {
+    console.log('ImplementationManager already deployed at:', expectedAddress);
+    return;
+  }
 
   // Deploy the PlentiFiFactory contract using deterministicFactory.deploy(bytes memory bytecode, bytes32 salt)
   const tx = await deterministicFactory.deploy(bytecode, salt);
   const receipt = await tx.wait();
 
-  // from the txHash, get the logs and extract the deployed address
-  const logged_address = receipt.logs.map(log => deterministicFactory.interface.parseLog(log))[1].args[0];
+  // get the tx hash
+  const txHash = receipt.hash;
 
-  console.log('ImplementationManager deployed to:', logged_address);
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  // get the logs emitted by the deterministicFactory in txHash
+  const logs = (await ethers.provider.getTransactionReceipt(txHash)).logs;
+
+  const deployedAddress = "0x" + logs.find(log => log.address === deterministicFactoryAddress).topics[1].slice(26);
+
+  console.log('ImplementationManager deployed at tx ', txHash, ' to:', deployedAddress);
 }
 
 main()
