@@ -49,14 +49,21 @@ async function main() {
     await new Promise(resolve => setTimeout(resolve, 10000));
   }
 
-  // Deploy the PlentiFiFactory contract using deterministicFactory.deploy(bytes memory bytecode, bytes32 salt)
+  // Deploy the PlentiFiAccountFactory contract using deterministicFactory.deploy(bytes memory bytecode, bytes32 salt)
   const tx = await deterministicFactory.deploy(bytecode, salt);
   const receipt = await tx.wait();
 
-  // from the txHash, get the logs and extract the deployed address
-  const logged_address = receipt.logs.map(log => deterministicFactory.interface.parseLog(log))[1].args[0];
+  // get the tx hash
+  const txHash = receipt.hash;
 
-  console.log('PlentiFiAccountFactory deployed to:', logged_address);
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  // get the logs emitted by the deterministicFactory in txHash
+  const logs = (await ethers.provider.getTransactionReceipt(txHash)).logs;
+
+  const deployedAddress = "0x" + logs.find(log => log.address === deterministicFactoryAddress).topics[1].slice(26);
+
+  console.log('PlentiFiAccountFactory deployed at tx ', txHash, ' to:', deployedAddress);
 }
 
 main()

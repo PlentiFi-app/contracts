@@ -40,7 +40,7 @@ async function main() {
     return;
   }
 
-  // Deploy the PlentiFiFactory contract using deterministicFactory.deploy(bytes memory bytecode, bytes32 salt)
+  // Deploy the ImplementationManager contract using deterministicFactory.deploy(bytes memory bytecode, bytes32 salt)
   const tx = await deterministicFactory.deploy(bytecode, salt);
   const receipt = await tx.wait();
 
