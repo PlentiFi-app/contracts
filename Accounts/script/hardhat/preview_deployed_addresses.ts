@@ -36,12 +36,10 @@ async function main() {
   const implManagerPreComputedAddress = await deterministicFactory.computeAddress(implManagerBytecode, implManagerSalt);
 
   // Canonical Account Factory
-  const firstImplementation_ = process.env.FIRST_IMPLEMENTATION_ADDRESS;
-  if (!firstImplementation_) throw new Error('FIRST_IMPLEMENTATION_ADDRESS not set in env');
   const factory_id = process.env.FACTORY_ID;
   if (!factory_id) throw new Error('FACTORY_ID not set in env');
   const Factory = await ethers.getContractFactory('PlentiFiAccountFactory'); // PlentiFiAccountFactory
-  const accountFactoryConstructorArgs = (new AbiCoder).encode(['address', 'address', 'bytes32'], [implManagerPreComputedAddress, firstImplementation_, factory_id]);
+  const accountFactoryConstructorArgs = (new AbiCoder).encode(['address', 'bytes32'], [implManagerPreComputedAddress, factory_id]);
   const accountFactoryBytecode = `${Factory.bytecode}${accountFactoryConstructorArgs.slice(2)}`; // Concatenate bytecode with encoded args
   const accountFactorySalt = keccak256(accountFactoryBytecode);
   const accountFactoryPreComputedAddress = await deterministicFactory.computeAddress(accountFactoryBytecode, accountFactorySalt);

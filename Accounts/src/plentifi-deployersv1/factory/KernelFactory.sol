@@ -31,7 +31,6 @@ contract PlentiFiAccountFactory {
     ) {
         implementationManager = IImplementationManager(implementationManager_);
         firstImplementation = new FirstImplementation();
-
         ID = id_;
     }
 

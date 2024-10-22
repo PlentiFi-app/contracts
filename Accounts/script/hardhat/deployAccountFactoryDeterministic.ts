@@ -10,8 +10,6 @@ async function main() {
   /* -------------CONSTRUCTOR ARGUMENTS----------------- */
   const implementationManager = process.env.IMPLEMENTATION_MANAGER_ADDRESS;
   if (!implementationManager) throw new Error('IMPLEMENTATION_ADDRESS not set in env');
-  const firstImplementation_ = process.env.FIRST_IMPLEMENTATION_ADDRESS;
-  if (!firstImplementation_) throw new Error('FIRST_IMPLEMENTATION_ADDRESS not set in env');
   const factory_id = process.env.FACTORY_ID;
   if (!factory_id) throw new Error('FACTORY_ID not set in env');
 
@@ -24,7 +22,7 @@ async function main() {
   /* -------------SETUP FACTORY FOR DEPLOYMENT----------------- */
   const Factory = await ethers.getContractFactory('PlentiFiAccountFactory'); // PlentiFiAccountFactory
   // Encode constructor arguments
-  const constructorArgs = (new AbiCoder).encode(['address', 'address', 'bytes32'], [implementationManager, firstImplementation_, factory_id]);
+  const constructorArgs = (new AbiCoder).encode(['address', 'bytes32'], [implementationManager, factory_id]);
   // Get the bytecode to deploy (including constructor arguments)
   const bytecode = `${Factory.bytecode}${constructorArgs.slice(2)}`; // Concatenate bytecode with encoded args
   const salt = keccak256(bytecode);
