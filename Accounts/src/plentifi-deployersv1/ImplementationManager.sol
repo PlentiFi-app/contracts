@@ -17,12 +17,12 @@ contract ImplementationManager is Ownable, IImplementationManager {
     bool public isInitialized;
     bool public locked;
 
-    address public entryPoint;
+    // address public entryPoint;
     address public proxyUpgrader;
     address public implementation;
 
     event ImplementationUpdated(address indexed implementation);
-    event EntryPointUpdated(address indexed entryPoint);
+    // event EntryPointUpdated(address indexed entryPoint);
     event ProxyUpgraderUpdated(address indexed proxyUpgrader);
 
     mapping(address => bool) public isService; // allowed to update the implementation and entryPoint
@@ -47,16 +47,16 @@ contract ImplementationManager is Ownable, IImplementationManager {
         transferOwnership(owner);
     }
 
-    function setEntryPoint(
-        address _entryPoint
-    ) external onlyServiceOrOwner lockedOrOwner {
-        if (_entryPoint == address(0)) {
-            revert("Cannot set implementation to address(0)");
-        }
-        entryPoint = _entryPoint;
+    // function setEntryPoint(
+    //     address _entryPoint
+    // ) external onlyServiceOrOwner lockedOrOwner {
+    //     if (_entryPoint == address(0)) {
+    //         revert("Cannot set implementation to address(0)");
+    //     }
+    //     entryPoint = _entryPoint;
 
-        emit EntryPointUpdated(_entryPoint);
-    }
+    //     emit EntryPointUpdated(_entryPoint);
+    // }
 
     function setImplementation(
         address _implementation
@@ -104,19 +104,19 @@ contract ImplementationManager is Ownable, IImplementationManager {
     // before registering the factories in the staker factory
     function initialize(
         address _implementation,
-        address _proxyUpgrader,
-        address _entrypoint
+        address _proxyUpgrader//,
+        // address _entrypoint
     ) external onlyServiceOrOwner lockedOrOwner {
         require(!isInitialized, "Already initialized");
 
         implementation = _implementation;
         proxyUpgrader = _proxyUpgrader;
-        entryPoint = _entrypoint;
+        // entryPoint = _entrypoint;
 
         isInitialized = true;
 
         emit ImplementationUpdated(_implementation);
-        emit EntryPointUpdated(_entrypoint);
+        // emit EntryPointUpdated(_entrypoint);
         emit ProxyUpgraderUpdated(_proxyUpgrader);
     }
 }

@@ -23,8 +23,6 @@ async function main() {
   if (!accountFactoryAddress) throw new Error('EXPECTED_PLENTIFI_CANONICAL_FACTORY_ADDRESS not set in env');
   const kernelAddress = process.env.KERNEL_IMPLEMENTATION_ADDRESS;
   if (!kernelAddress) throw new Error('KERNEL_IMPLEMENTATION_ADDRESS not set in env');
-  const entrypointV07 = process.env.ENTRYPOINT_V_0_7_0;
-  if (!entrypointV07) throw new Error('ENTRYPOINT_V_0_7_0 not set in env');
   const proxyUpgrader = process.env.PROXY_UPGRADER_ADDRESS;
   if (!proxyUpgrader) throw new Error('PROXY_UPGRADER_ADDRESS not set in env');
 
@@ -34,7 +32,6 @@ async function main() {
   if (await ethers.provider.getCode(factoryStakerAddress) === '0x') throw new Error('FactoryStaker not deployed');
   if (await ethers.provider.getCode(accountFactoryAddress) === '0x') throw new Error('AccountFactory not deployed');
   if (await ethers.provider.getCode(kernelAddress) === '0x') throw new Error('Kernel not deployed');
-  if (await ethers.provider.getCode(entrypointV07) === '0x') throw new Error('Entrypoint not deployed');
   if (await ethers.provider.getCode(proxyUpgrader) === '0x') throw new Error('ProxyUpgrader not deployed');
 
   /* -------------INITIALIZE ImplementationManager----------------- */
@@ -49,12 +46,12 @@ async function main() {
     const currentEntrypoint = await ImplementationManager.entryPoint();
     const currentProxyUpgrader = await ImplementationManager.proxyUpgrader();
 
-    if (currentImplementation !== kernelAddress || currentEntrypoint !== entrypointV07 || currentProxyUpgrader !== proxyUpgrader) {
+    if (currentImplementation !== kernelAddress || currentProxyUpgrader !== proxyUpgrader) {
       throw new Error('ImplementationManager already initialized with different values');
     }
   } else {
 
-    const initializationTx = await ImplementationManager.initialize(kernelAddress, proxyUpgrader, entrypointV07);
+    const initializationTx = await ImplementationManager.initialize(kernelAddress, proxyUpgrader);
     await initializationTx.wait();
     console.log('ImplementationManager initialized with Kernel, Entrypoint and ProxyUpgrader in tx: ', initializationTx.hash);
   }

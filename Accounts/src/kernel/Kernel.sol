@@ -84,37 +84,37 @@ contract Kernel is
         bytes calldata hookData,
         bytes[] calldata initConfig
     ) external {
-        // check initialization
-        ValidationStorage storage vs = _validationStorage();
-        require(
-            ValidationId.unwrap(vs.rootValidator) == bytes21(0),
-            "already initialized"
-        );
+        // // check initialization
+        // ValidationStorage storage vs = _validationStorage();
+        // require(
+        //     ValidationId.unwrap(vs.rootValidator) == bytes21(0),
+        //     "already initialized"
+        // );
 
-        if (ValidationId.unwrap(_rootValidator) == bytes21(0)) {
-            revert InvalidValidator();
-        }
+        // if (ValidationId.unwrap(_rootValidator) == bytes21(0)) {
+        //     revert InvalidValidator();
+        // }
 
-        ValidationType vType = ValidatorLib.getType(_rootValidator);
-        if (
-            vType != VALIDATION_TYPE_VALIDATOR &&
-            vType != VALIDATION_TYPE_PERMISSION
-        ) {
-            revert InvalidValidationType();
-        }
-        _setRootValidator(_rootValidator);
-        ValidationConfig memory config = ValidationConfig({
-            nonce: uint32(1),
-            hook: hook
-        });
-        vs.currentNonce = 1;
-        _installValidation(_rootValidator, config, validatorData, hookData);
-        for (uint256 i = 0; i < initConfig.length; i++) {
-            (bool success, ) = address(this).call(initConfig[i]);
-            if (!success) {
-                revert InitConfigError(i);
-            }
-        }
+        // ValidationType vType = ValidatorLib.getType(_rootValidator);
+        // if (
+        //     vType != VALIDATION_TYPE_VALIDATOR &&
+        //     vType != VALIDATION_TYPE_PERMISSION
+        // ) {
+        //     revert InvalidValidationType();
+        // }
+        // _setRootValidator(_rootValidator);
+        // ValidationConfig memory config = ValidationConfig({
+        //     nonce: uint32(1),
+        //     hook: hook
+        // });
+        // vs.currentNonce = 1;
+        // _installValidation(_rootValidator, config, validatorData, hookData);
+        // for (uint256 i = 0; i < initConfig.length; i++) {
+        //     (bool success, ) = address(this).call(initConfig[i]);
+        //     if (!success) {
+        //         revert InitConfigError(i);
+        //     }
+        // }
     }
 
     function changeRootValidator(

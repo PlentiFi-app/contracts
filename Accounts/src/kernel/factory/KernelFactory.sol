@@ -30,4 +30,4 @@ contract KernelFactory {
         bytes32 actualSalt = keccak256(abi.encodePacked(data, salt));
         return LibClone.predictDeterministicAddressERC1967(implementation, actualSalt, address(this));
     }
-}
+} 

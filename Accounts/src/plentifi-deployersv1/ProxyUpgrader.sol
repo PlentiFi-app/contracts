@@ -27,9 +27,10 @@ contract ProxyUpgrader {
         address newImplementation,
         bytes calldata initdata
     ) public {
+        // revert("alphabet");
         (
-            ValidationId rootValidator,
-            IHook hook,
+            ValidationId rootValidator, // bytes21
+            IHook hook, // address ??
             bytes memory validatorData,
             bytes memory hookData,
             bytes[] memory initConfig
@@ -42,14 +43,14 @@ contract ProxyUpgrader {
             address(newImplementation), // newImplementation
             // initdata,
             abi.encodeWithSelector(
-                Kernel.initialize.selector,
+                bytes4(0x3c3b752b), // Kernel.initialize.selector, // 0x485cc955
                 rootValidator, // ValidationId
                 hook, // IHook
                 validatorData, // validatorData
                 hookData, // hookData
                 initConfig // initConfig
             ),
-            false
+            true // false
         );
     }
 
@@ -68,7 +69,10 @@ contract ProxyUpgrader {
         )
     {
         return
-            abi.decode(initdata, (ValidationId, IHook, bytes, bytes, bytes[]));
+            abi.decode(
+                initdata[4:],
+                (ValidationId, IHook, bytes, bytes, bytes[])
+            );
         // rootValidator = bytes21("");
         // hook = IHook(address(0));
         // validatorData = new bytes(0);
