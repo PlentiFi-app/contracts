@@ -4,7 +4,7 @@
 
 pragma solidity ^0.8.19;
 
-contract Increment {
+contract Counter {
   uint256 public count = 0;
   address lastIncrementer;
 
