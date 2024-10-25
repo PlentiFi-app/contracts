@@ -20,8 +20,7 @@ contract PlentiFiAccountFactory {
     // the custom identifier for special purpose factories
     bytes32 public immutable ID;
 
-    event AccountCreated(address indexed account, bytes32 salt);
-    event DeploymentAttempt(address computedAddress, bytes32 saltHash, bytes32 bytecodeHash);
+    event AccountDeployed(address indexed account, bytes32 salt);
 
     constructor(address implementationManager_, bytes32 id_) {
         implementationManager = IImplementationManager(implementationManager_);
@@ -34,8 +33,8 @@ contract PlentiFiAccountFactory {
         bytes32 salt
     ) public payable returns (address) {
         address addr = getAddress(data, salt);
-        bytes32 saltHash = _getSalt(data, salt);
-        
+        bytes32 saltHash = _saltHash(salt);
+
         uint32 size;
         assembly {
             size := extcodesize(addr)
@@ -46,27 +45,16 @@ contract PlentiFiAccountFactory {
             return addr;
         }
 
-        // For debugging: emit computed values
-        bytes memory bytecode = abi.encodePacked(
-            type(ERC1967Proxy).creationCode,
-            abi.encode(address(firstImplementation), "")
-        );
-        emit DeploymentAttempt(addr, saltHash, keccak256(bytecode));
-
-        try new ERC1967Proxy{salt: saltHash}(
-            address(firstImplementation),
-            ""
-        ) returns (ERC1967Proxy proxy) {
+        try
+            new ERC1967Proxy{salt: saltHash}(address(firstImplementation), "")
+        returns (ERC1967Proxy proxy) {
             address newImplementation = implementationManager.implementation();
 
             // upgrade to the last available implementation and initialize the proxy
-            ProxyUpgrader(address(implementationManager.proxyUpgrader())).upgrade(
-                address(proxy),
-                newImplementation,
-                data
-            );
+            ProxyUpgrader(address(implementationManager.proxyUpgrader()))
+                .upgrade(address(proxy), newImplementation, data);
 
-            emit AccountCreated(address(proxy), salt);
+            emit AccountDeployed(address(proxy), salt);
             return address(proxy);
         } catch {
             revert DeploymentFailed();
@@ -74,32 +62,32 @@ contract PlentiFiAccountFactory {
     }
 
     function getAddress(
-        bytes calldata login,
+        // kept to match the usual kernel factory interface and avoid issues with its sdk
+        bytes memory,
         bytes32 salt
     ) public view returns (address) {
-        bytes32 saltHash = _getSalt(login, salt);
+        bytes32 saltHash = _saltHash(salt);
         bytes memory bytecode = abi.encodePacked(
             type(ERC1967Proxy).creationCode,
             abi.encode(address(firstImplementation), "")
         );
 
-        return Create2.computeAddress(saltHash, keccak256(bytecode), address(this));
+        return
+            Create2.computeAddress(
+                saltHash,
+                keccak256(bytecode),
+                address(this)
+            );
     }
 
-    // when trying to call getAddress using ethers, 
+    // when trying to call getAddress using ethers,
     // it returns the contract addres (because of the ethers' built-in function)
     // so we need to wrap the function to get the address
-    function getAddressWrapper(
-        bytes calldata login,
-        bytes32 salt
-    ) public view returns (address) {
-        return getAddress(login, salt);
+    function getAddressWrapper(bytes32 salt) public view returns (address) {
+        return getAddress("", salt);
     }
 
-    function _getSalt(
-        bytes calldata login,
-        bytes32 _salt
-    ) public pure returns (bytes32 salt) {
-        salt = keccak256(abi.encodePacked(login, _salt));
+    function _saltHash(bytes32 _salt) public pure returns (bytes32 salt) {
+        salt = keccak256(abi.encodePacked(_salt));
     }
 }

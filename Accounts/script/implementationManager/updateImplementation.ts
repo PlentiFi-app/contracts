@@ -18,8 +18,7 @@ async function main() {
   if (await ethers.provider.getCode(kernel) === '0x') throw new Error('Kernel not deployed');
 
   /* -------------INITIALIZE ImplementationManager----------------- */
-  const implementationManagerAbi = require('../../artifacts/src/plentifi-deployersv1/ImplementationManager.sol/ImplementationManager.json').abi;
-  const ImplementationManager = await ethers.getContractAt(implementationManagerAbi, implementationManagerAddress);
+  const ImplementationManager = await ethers.getContractAt("ImplementationManager", implementationManagerAddress);
 
   // check if the implementationManager is already initialized
   const isInitialized = await ImplementationManager.isInitialized();

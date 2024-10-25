@@ -35,8 +35,7 @@ async function main() {
   if (await ethers.provider.getCode(proxyUpgrader) === '0x') throw new Error('ProxyUpgrader not deployed');
 
   /* -------------INITIALIZE ImplementationManager----------------- */
-  const implementationManagerAbi = require('../artifacts/src/plentifi-deployersv1/ImplementationManager.sol/ImplementationManager.json').abi;
-  const ImplementationManager = await ethers.getContractAt(implementationManagerAbi, implementationManagerAddress);
+  const ImplementationManager = await ethers.getContractAt("ImplementationManager", implementationManagerAddress);
 
   // check if already initialized
   const isInitialized = await ImplementationManager.isInitialized();
