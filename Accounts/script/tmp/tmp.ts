@@ -52,7 +52,7 @@ async function main() {
   console.log('createData:', createData);
 
   // bytes32 
-  const salt = "0xb3e5198d543c6bc39bfb99ca47e4be7508c2c5db3d9a3c909edde474bf1bcc9b"; // keccak256('0x0123456789abcdef');
+  const salt = "0xb3e6198d543c6bc39bfb99ca47e4bf7508c2c5db3d9a3c909edde474bf1bcc7b"; // keccak256('0x0123456789abcdef');
 
   /* -------------ENSURE accountFactory IS APPROVED----------------- */
   const FactoryStaker = await ethers.getContractAt('PlentifiFactoryStaker', factoryStakerAddress);
@@ -81,33 +81,3 @@ main()
     console.error(error);
     process.exit(1);
   });
-
-function parseInitData(initData: string): {
-  rootValidator: string;  // Assuming ValidationId is a bytes21
-  hook: string;  // Assuming IHook is an address
-  validatorData: string;
-  hookData: string;
-  initConfig: string[];
-} {
-  // Define the parameter types in the order of the Solidity function
-  const types = [
-    "bytes21",  // rootValidator
-    "address",  // hook
-    "bytes",    // validatorData
-    "bytes",    // hookData
-    "bytes[]"   // initConfig
-  ];
-
-  // Use ethers ABI coder to decode the data
-  const abiCoder = new ethers.AbiCoder();
-  const decoded = abiCoder.decode(types, initData);
-
-  // Return the decoded values as an object
-  return {
-    rootValidator: decoded[0],
-    hook: decoded[1],
-    validatorData: decoded[2],
-    hookData: decoded[3],
-    initConfig: decoded[4]
-  };
-}

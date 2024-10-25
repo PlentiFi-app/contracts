@@ -20,6 +20,7 @@ npx hardhat run script/hardhat/deployImplementationManagerDeterministic.ts --net
 
 Deploy the Factory Staker:
 ```bash
+# actually, this does not need to be deterministic
 npx hardhat run script/hardhat/deployFactoryStakerDeterministic.ts --network <your_evm_network>
 ```
 

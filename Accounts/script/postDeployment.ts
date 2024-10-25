@@ -43,7 +43,6 @@ async function main() {
   if (isInitialized) {
     // get the current implementation, entrypoint and proxyUpgrader 
     const currentImplementation = await ImplementationManager.implementation();
-    const currentEntrypoint = await ImplementationManager.entryPoint();
     const currentProxyUpgrader = await ImplementationManager.proxyUpgrader();
 
     if (currentImplementation !== kernelAddress || currentProxyUpgrader !== proxyUpgrader) {
@@ -56,8 +55,7 @@ async function main() {
     console.log('ImplementationManager initialized with Kernel, Entrypoint and ProxyUpgrader in tx: ', initializationTx.hash);
   }
   /* -------------REGISTER AccountFactory in FactoryStaker----------------- */
-  const factoryStakerAbi = require('../artifacts/src/plentifi-deployersv1/factory/FactoryStaker.sol/PlentifiFactoryStaker.json').abi;
-  const FactoryStaker = await ethers.getContractAt(factoryStakerAbi, factoryStakerAddress);
+  const FactoryStaker = await ethers.getContractAt("PlentifiFactoryStaker", factoryStakerAddress);
 
   const approvalTx = await FactoryStaker.approveFactory(accountFactoryAddress, true);
   await approvalTx.wait();

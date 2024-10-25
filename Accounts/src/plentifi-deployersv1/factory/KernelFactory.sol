@@ -11,6 +11,7 @@ import {ProxyUpgrader} from "../ProxyUpgrader.sol";
 
 contract PlentiFiAccountFactory {
     error InitializeError();
+    error DeploymentFailed();
 
     string public constant versionId = "PlentiFi-AccountFactory-v0.0.2";
     FirstImplementation public immutable firstImplementation;
@@ -20,15 +21,9 @@ contract PlentiFiAccountFactory {
     bytes32 public immutable ID;
 
     event AccountCreated(address indexed account, bytes32 salt);
+    event DeploymentAttempt(address computedAddress, bytes32 saltHash, bytes32 bytecodeHash);
 
-    /**
-     * @param implementationManager_ the implementation manager contract
-     * @param id_ the custom identifier for special purpose factories
-     */
-    constructor(
-        address implementationManager_,
-        bytes32 id_
-    ) {
+    constructor(address implementationManager_, bytes32 id_) {
         implementationManager = IImplementationManager(implementationManager_);
         firstImplementation = new FirstImplementation();
         ID = id_;
@@ -39,35 +34,45 @@ contract PlentiFiAccountFactory {
         bytes32 salt
     ) public payable returns (address) {
         address addr = getAddress(data, salt);
-        uint256 codeSize = addr.code.length;
-
-        if (codeSize > 0) {
-            return address(payable(addr));
+        bytes32 saltHash = _getSalt(data, salt);
+        
+        uint32 size;
+        assembly {
+            size := extcodesize(addr)
         }
 
-        FirstImplementation proxy = FirstImplementation(
-            address(
-                new ERC1967Proxy{salt: salt}(address(firstImplementation), "")
-            )
+        // If there's already a contract, return its address
+        if (size > 0) {
+            return addr;
+        }
+
+        // For debugging: emit computed values
+        bytes memory bytecode = abi.encodePacked(
+            type(ERC1967Proxy).creationCode,
+            abi.encode(address(firstImplementation), "")
         );
+        emit DeploymentAttempt(addr, saltHash, keccak256(bytecode));
 
-        address newImplementation = implementationManager.implementation();
+        try new ERC1967Proxy{salt: saltHash}(
+            address(firstImplementation),
+            ""
+        ) returns (ERC1967Proxy proxy) {
+            address newImplementation = implementationManager.implementation();
 
-        // upgrade to the last available implementation and initialize the proxy
-        ProxyUpgrader(address(implementationManager.proxyUpgrader())).upgrade(
-            address(proxy),
-            newImplementation,
-            data
-        );
+            // upgrade to the last available implementation and initialize the proxy
+            ProxyUpgrader(address(implementationManager.proxyUpgrader())).upgrade(
+                address(proxy),
+                newImplementation,
+                data
+            );
 
-        emit AccountCreated(address(proxy), salt);
-
-        return address(proxy);
+            emit AccountCreated(address(proxy), salt);
+            return address(proxy);
+        } catch {
+            revert DeploymentFailed();
+        }
     }
 
-    /**
-     * calculate the counterfactual address of this account as it would be returned by createAccount()
-     */
     function getAddress(
         bytes calldata login,
         bytes32 salt
@@ -78,15 +83,12 @@ contract PlentiFiAccountFactory {
             abi.encode(address(firstImplementation), "")
         );
 
-        return
-            Create2.computeAddress(
-                saltHash,
-                keccak256(bytecode),
-                address(this)
-            );
+        return Create2.computeAddress(saltHash, keccak256(bytecode), address(this));
     }
 
-    // wrapper for getAddress() since with ethers 6, proxyFactoryContract.getAddress(login, salt); returns the factory address
+    // when trying to call getAddress using ethers, 
+    // it returns the contract addres (because of the ethers' built-in function)
+    // so we need to wrap the function to get the address
     function getAddressWrapper(
         bytes calldata login,
         bytes32 salt
