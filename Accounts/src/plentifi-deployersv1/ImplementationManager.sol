@@ -6,9 +6,13 @@ import {Ownable} from "openzeppelin/contracts/access/Ownable.sol";
 import {FirstImplementation} from "./FirstImplementation.sol";
 import {IImplementationManager} from "./interfaces/IImplementationManager.sol";
 
-// This contract is the implementation manager for all the erc1967 proxies deployed by the factory
-// It MUST never change
-// it MUST always have the same address on any evm compatible chain
+/**
+ * @title ImplementationManager
+ * @notice This contract manages implementations for ERC1967 proxies deployed by the factory
+ * @dev This contract is designed to be immutable and maintain the same address across all EVM-compatible chains
+ * It MUST never change
+ * It MUST always have the same address on any evm compatible chain
+ */
 contract ImplementationManager is Ownable, IImplementationManager {
     string public constant versionId = "ImplementationManager-v0.0.1";
 
@@ -17,106 +21,139 @@ contract ImplementationManager is Ownable, IImplementationManager {
     bool public isInitialized;
     bool public locked;
 
-    // address public entryPoint;
     address public proxyUpgrader;
     address public implementation;
 
     event ImplementationUpdated(address indexed implementation);
-    // event EntryPointUpdated(address indexed entryPoint);
     event ProxyUpgraderUpdated(address indexed proxyUpgrader);
 
-    mapping(address => bool) public isService; // allowed to update the implementation and entryPoint
+    error AlreadyInitialized();
+    error NotInitialized();
+    error Unauthorized();
+    error ZeroAddress();
 
+    /// @notice Allowed addresses to update the implementation and proxy upgrader
+    mapping(address => bool) public isService;
+
+    /**
+     * @notice Ensures caller is either a service or the owner
+     */
     modifier onlyServiceOrOwner() {
-        require(isService[msg.sender] || msg.sender == owner(), "Not allowed");
+        if (!isService[msg.sender] && msg.sender != owner()) {
+            revert Unauthorized();
+        }
         _;
     }
 
-    // revert if locked and not the owner
+    /**
+     * @notice Ensures contract is either unlocked or caller is owner
+     */
     modifier lockedOrOwner() {
-        require(!locked || msg.sender == owner(), "Not allowed");
+        if (locked && msg.sender != owner()) {
+            revert Unauthorized();
+        }
         _;
     }
 
-    modifier initialized() {
-        require(isInitialized, "Not initialized");
+    /**
+     * @notice Ensures contract is initialized
+     */
+    modifier initializedOnly() {
+        if (!isInitialized) {
+            revert NotInitialized();
+        }
         _;
     }
 
-    constructor(address owner) {
-        transferOwnership(owner);
+    /**
+     * @notice Contract constructor
+     * @param owner_ Initial owner address of the contract
+     */
+    constructor(address owner_) {
+        if (owner_ == address(0)) revert ZeroAddress();
+        transferOwnership(owner_);
     }
 
-    // function setEntryPoint(
-    //     address _entryPoint
-    // ) external onlyServiceOrOwner lockedOrOwner {
-    //     if (_entryPoint == address(0)) {
-    //         revert("Cannot set implementation to address(0)");
-    //     }
-    //     entryPoint = _entryPoint;
-
-    //     emit EntryPointUpdated(_entryPoint);
-    // }
-
+    /**
+     * @notice Sets the implementation address
+     * @param _implementation New implementation address
+     */
     function setImplementation(
         address _implementation
     ) external onlyServiceOrOwner lockedOrOwner {
-        if (_implementation == address(0)) {
-            revert("Cannot set implementation to address(0)");
-        }
+        if (_implementation == address(0)) revert ZeroAddress();
         implementation = _implementation;
-
         emit ImplementationUpdated(_implementation);
     }
 
+    /**
+     * @notice Sets the proxy upgrader address
+     * @param _proxyUpgrader New proxy upgrader address
+     */
     function setProxyUpgrader(
         address _proxyUpgrader
     ) external onlyServiceOrOwner lockedOrOwner {
-        if (_proxyUpgrader == address(0)) {
-            revert("Cannot set implementation to address(0)");
-        }
+        if (_proxyUpgrader == address(0)) revert ZeroAddress();
         proxyUpgrader = _proxyUpgrader;
-
         emit ProxyUpgraderUpdated(_proxyUpgrader);
     }
 
+    /**
+     * @notice Unlocks the contract
+     */
     function unlock() external onlyServiceOrOwner {
         locked = false;
     }
 
+    /**
+     * @notice Locks the contract
+     */
     function lock() external onlyServiceOrOwner {
         locked = true;
     }
 
+    /**
+     * @notice Adds a service address
+     * @param _service Address to be added as a service
+     */
     function addService(
         address _service
-    ) external onlyServiceOrOwner lockedOrOwner initialized {
+    ) external onlyServiceOrOwner lockedOrOwner initializedOnly {
+        if (_service == address(0)) revert ZeroAddress();
         isService[_service] = true;
     }
 
+    /**
+     * @notice Removes a service address
+     * @param _service Address to be removed from services
+     */
     function removeService(
         address _service
-    ) external onlyServiceOrOwner lockedOrOwner initialized {
+    ) external onlyServiceOrOwner lockedOrOwner initializedOnly {
+        if (_service == address(0)) revert ZeroAddress();
         isService[_service] = false;
     }
 
-    // initialize the contract. Should be called right after deployment,
-    // before registering the factories in the staker factory
+    /**
+     * @notice Initializes the contract with implementation and proxy upgrader addresses
+     * @dev Should be called immediately after deployment and before registering factories
+     * @param _implementation Initial implementation address
+     * @param _proxyUpgrader Initial proxy upgrader address
+     */
     function initialize(
         address _implementation,
-        address _proxyUpgrader//,
-        // address _entrypoint
+        address _proxyUpgrader
     ) external onlyServiceOrOwner lockedOrOwner {
-        require(!isInitialized, "Already initialized");
+        if (isInitialized) revert AlreadyInitialized();
+        if (_implementation == address(0) || _proxyUpgrader == address(0)) {
+            revert ZeroAddress();
+        }
 
         implementation = _implementation;
         proxyUpgrader = _proxyUpgrader;
-        // entryPoint = _entrypoint;
-
         isInitialized = true;
 
         emit ImplementationUpdated(_implementation);
-        // emit EntryPointUpdated(_entrypoint);
         emit ProxyUpgraderUpdated(_proxyUpgrader);
     }
 }

@@ -21,7 +21,7 @@ contract PlentiFiAccountFactory {
     error InitializeError();
     error ZeroAddress();
 
-    string public constant versionId = "PlentiFi-AccountFactory-v0.0.2";
+    string public constant versionId = "PlentiFi-AccountFactory-v0.0.1";
     FirstImplementation public immutable firstImplementation;
     IImplementationManager public immutable implementationManager;
 
