@@ -39,7 +39,7 @@ contract PlentiFiAccountFactory {
         if (implementationManager_ == address(0)) revert ZeroAddress();
 
         implementationManager = IImplementationManager(implementationManager_);
-        firstImplementation = new FirstImplementation(); // todo: transfer token value to the constructor {value: msg.value}
+        firstImplementation = new FirstImplementation();
         ID = id_;
 
         // Validate implementation manager interface
@@ -73,7 +73,7 @@ contract PlentiFiAccountFactory {
         }
 
         try
-            new ERC1967Proxy{salt: salt}(address(firstImplementation), "")
+            new ERC1967Proxy{salt: salt, value: msg.value}(address(firstImplementation), "")
         returns (ERC1967Proxy proxy) {
             address newImplementation = implementationManager.implementation();
             address proxyAddress = address(proxy);
