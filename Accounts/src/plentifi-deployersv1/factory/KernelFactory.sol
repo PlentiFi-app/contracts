@@ -39,7 +39,7 @@ contract PlentiFiAccountFactory {
         if (implementationManager_ == address(0)) revert ZeroAddress();
 
         implementationManager = IImplementationManager(implementationManager_);
-        firstImplementation = new FirstImplementation();
+        firstImplementation = new FirstImplementation(); // todo: transfer token value to the constructor {value: msg.value}
         ID = id_;
 
         // Validate implementation manager interface

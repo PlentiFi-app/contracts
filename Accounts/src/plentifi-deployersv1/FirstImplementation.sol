@@ -12,6 +12,8 @@ contract FirstImplementation is UUPSUpgradeable {
 
     string public constant versionId = "FirstImplementation-v0.0.1";
 
+     constructor () {}
+
     function _authorizeUpgrade(
         address newImplementation
     ) internal pure override {
