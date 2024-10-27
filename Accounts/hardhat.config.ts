@@ -1,43 +1,3 @@
-// import "@nomicfoundation/hardhat-toolbox";
-// import "@nomicfoundation/hardhat-foundry";
-// import { HardhatUserConfig } from "hardhat/config";
-// import "hardhat-spdx-license-identifier";
-// import "hardhat-contract-sizer";
-
-// import "dotenv/config";
-
-// const config: HardhatUserConfig = {
-//   solidity: {
-//     version: "0.8.25",
-//     settings: {
-//       viaIR: true,
-//       optimizer: {
-//         enabled: true,
-//         runs: 200,
-//       },
-//     },
-//   },
-//   spdxLicenseIdentifier: {
-//     overwrite: false,
-//     runOnCompile: true
-//   },
-//   contractSizer: {
-//     alphaSort: true,
-//     disambiguatePaths: false,
-//     runOnCompile: true,
-//     strict: true,
-//   },
-//   networks: {
-//     local: {
-//       url: process.env.NETWORK_URL,
-//       accounts: [process.env.PRIVATE_KEY!],
-//     },
-//   },
-// };
-
-// export default config;
-
-
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-foundry";
 import { HardhatUserConfig } from "hardhat/config";
@@ -96,6 +56,10 @@ const config: HardhatUserConfig = {
   networks: {
     local: {
       url: process.env.NETWORK_URL,
+      accounts: [process.env.PRIVATE_KEY!],
+    },
+    holesky: {
+      url: process.env.HOLESKY_TESTNET_URL,
       accounts: [process.env.PRIVATE_KEY!],
     },
     arbitrumSepolia: {

@@ -83,11 +83,11 @@ contract PlentiFiAccountFactory {
     // when trying to call getAddress using ethers,
     // it returns the contract addres (because of the ethers' built-in function)
     // so we need to wrap the function to get the address
-    function getAddressWrapper(bytes32 salt) public view returns (address) {
+    function getAddressWrapper(bytes32 salt) external view returns (address) {
         return getAddress("", salt);
     }
 
-    function _saltHash(bytes32 _salt) public pure returns (bytes32 salt) {
+    function _saltHash(bytes32 _salt) internal pure returns (bytes32 salt) {
         salt = keccak256(abi.encodePacked(_salt));
     }
 }
