@@ -74,7 +74,7 @@ contract PlentiFiAccountFactory {
             address proxyAddress = address(proxy);
 
             // upgrade to the last available implementation and initialize
-            ProxyUpgrader(address(implementationManager.proxyUpgrader()))
+            ProxyUpgrader(implementationManager.proxyUpgrader())
                 .upgrade(proxyAddress, newImplementation, data);
 
             emit AccountDeployed(proxyAddress, salt);
