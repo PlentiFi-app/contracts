@@ -17,7 +17,7 @@ async function main() {
   const owner = process.env.FACTORY_STAKER_OWNER;
   if (!owner) throw new Error('FACTORY_STAKER_OWNER not set in env');
   const locked = false;
-  const FactoryStaker = await ethers.getContractFactory('PlentifiFactoryStaker'); // FactoryStaker
+  const FactoryStaker = await ethers.getContractFactory('PlentiFiFactoryStaker'); // FactoryStaker
   // Encode constructor arguments
   const constructorArgs = (new AbiCoder).encode(['address', 'bool'], [owner, locked]);
   // Get the bytecode to deploy (including constructor arguments)

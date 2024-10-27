@@ -23,7 +23,7 @@ async function main() {
   if (!factoryStakerOwner) throw new Error('FACTORY_STAKER_OWNER not set in env');
   const locked = false;
   const factoryStakerConstructorArgs = (new AbiCoder).encode(['address', 'bool'], [factoryStakerOwner, locked]);
-  const FactoryStaker = await ethers.getContractFactory('PlentifiFactoryStaker'); // FactoryStaker
+  const FactoryStaker = await ethers.getContractFactory('PlentiFiFactoryStaker'); // FactoryStaker
   const factoryStakerBytecode = `${FactoryStaker.bytecode}${factoryStakerConstructorArgs.slice(2)}`; // Concatenate bytecode with encoded args
   const factoryStakerSalt = keccak256(factoryStakerBytecode);
   const preComputedFactoryStaker = await deterministicFactory.computeAddress(factoryStakerBytecode, factoryStakerSalt);

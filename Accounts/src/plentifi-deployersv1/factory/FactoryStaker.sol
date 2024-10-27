@@ -7,12 +7,12 @@ import "../../kernel/interfaces/IEntryPoint.sol";
 import "solady/auth/Ownable.sol";
 
 /**
- * @title PlentifiFactoryStaker
- * @notice Manages account factory deployments and entrypoint staking operations for Plentifi
+ * @title PlentiFiFactoryStaker
+ * @notice Manages account factory deployments and entrypoint staking operations for PlentiFi
  * @dev Implements factory approval system and EntryPoint staking functionality
  * Derived from the kernel FactoryStaker contract
  */
-contract PlentifiFactoryStaker is Ownable {
+contract PlentiFiFactoryStaker is Ownable {
     /// @notice Version identifier for the contract
     string public constant versionId = "PlentiFi-StakerFactory-v0.0.1";
 

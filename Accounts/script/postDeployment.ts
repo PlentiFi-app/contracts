@@ -54,7 +54,7 @@ async function main() {
     console.log('ImplementationManager initialized with Kernel, Entrypoint and ProxyUpgrader in tx: ', initializationTx.hash);
   }
   /* -------------REGISTER AccountFactory in FactoryStaker----------------- */
-  const FactoryStaker = await ethers.getContractAt("PlentifiFactoryStaker", factoryStakerAddress);
+  const FactoryStaker = await ethers.getContractAt("PlentiFiFactoryStaker", factoryStakerAddress);
 
   const approvalTx = await FactoryStaker.approveFactory(accountFactoryAddress, true);
   await approvalTx.wait();

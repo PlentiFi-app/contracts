@@ -58,7 +58,7 @@ async function main() {
   const salt = decoded[2];
 
   /* -------------ENSURE accountFactory IS APPROVED----------------- */
-  const FactoryStaker = await ethers.getContractAt('PlentifiFactoryStaker', factoryStakerAddress);
+  const FactoryStaker = await ethers.getContractAt('PlentiFiFactoryStaker', factoryStakerAddress);
 
   const isApproved = await FactoryStaker.approved(accountFactoryAddress);
   if (!isApproved) {

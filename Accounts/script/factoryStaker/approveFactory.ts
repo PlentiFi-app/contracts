@@ -25,7 +25,7 @@ async function main() {
   if (await ethers.provider.getCode(accountFactoryAddress) === '0x') throw new Error('AccountFactory not deployed');
 
   /* -------------REGISTER AccountFactory in FactoryStaker----------------- */
-  const FactoryStaker = await ethers.getContractAt("PlentifiFactoryStaker", factoryStakerAddress);
+  const FactoryStaker = await ethers.getContractAt("PlentiFiFactoryStaker", factoryStakerAddress);
 
   const approvalTx = await FactoryStaker.approveFactory(accountFactoryAddress, true);
   await approvalTx.wait();
