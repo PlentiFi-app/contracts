@@ -41,11 +41,6 @@ contract PlentiFiAccountFactory {
         implementationManager = IImplementationManager(implementationManager_);
         firstImplementation = new FirstImplementation();
         ID = id_;
-
-        // Validate implementation manager interface
-        try implementationManager.implementation() returns (address) {} catch {
-            revert InvalidImplementationManager();
-        }
     }
 
     /**

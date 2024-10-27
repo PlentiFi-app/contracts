@@ -27,29 +27,26 @@ contract ProxyUpgrader {
         address newImplementation,
         bytes calldata initdata
     ) public {
-        // revert("alphabet");
-        (
-            ValidationId rootValidator, // bytes21
-            IHook hook, // address ??
-            bytes memory validatorData,
-            bytes memory hookData,
-            bytes[] memory initConfig
-        ) = _parseInitData(initdata);
-
-        // revert("alphabet");
+        // (
+        //     ValidationId rootValidator, // bytes21
+        //     IHook hook, // address
+        //     bytes memory validatorData,
+        //     bytes memory hookData,
+        //     bytes[] memory initConfig
+        // ) = _parseInitData(initdata);
 
         // upgrade to the last available implementation and initialize the proxy
         IFirstImplementation(proxy).upgradeToAndCall(
-            address(newImplementation), // newImplementation
-            // initdata,
-            abi.encodeWithSelector(
-                bytes4(0x3c3b752b), // Kernel.initialize.selector, // 0x485cc955
-                rootValidator, // ValidationId
-                hook, // IHook
-                validatorData, // validatorData
-                hookData, // hookData
-                initConfig // initConfig
-            ),
+            newImplementation,
+            initdata,
+            // abi.encodeWithSelector(
+            //     bytes4(0x3c3b752b), // Kernel.initialize.selector, // 0x485cc955
+            //     rootValidator, // ValidationId
+            //     hook, // IHook
+            //     validatorData, // validatorData
+            //     hookData, // hookData
+            //     initConfig // initConfig
+            // ),
             true // false
         );
     }
