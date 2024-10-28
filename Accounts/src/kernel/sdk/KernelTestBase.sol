@@ -432,7 +432,7 @@ abstract contract KernelTestBase is Test {
         assertEq(0, callee.value());
     }
 
-    function _rootSignDigest(bytes32 /* digest */, bool success) internal virtual returns (bytes memory data) {
+    function _rootSignDigest(bytes32 digest, bool success) internal virtual returns (bytes memory data) {
         if (success) {
             data = "enableSig";
             mockValidator.sudoSetValidSig(data);
@@ -456,7 +456,7 @@ abstract contract KernelTestBase is Test {
         revert("Invalid validation type");
     }
 
-    function _rootSignUserOp(PackedUserOperation memory /* op */, bool success) internal virtual returns (bytes memory) {
+    function _rootSignUserOp(PackedUserOperation memory op, bool success) internal virtual returns (bytes memory) {
         mockValidator.sudoSetSuccess(success);
         return success ? abi.encodePacked("success") : abi.encodePacked("failure");
     }
@@ -474,7 +474,7 @@ abstract contract KernelTestBase is Test {
         }
     }
 
-    function _validatorSignDigest(bytes32 /* digest */, bool success) internal virtual returns (bytes memory data) {
+    function _validatorSignDigest(bytes32 digest, bool success) internal virtual returns (bytes memory data) {
         if (success) {
             data = "enableSig";
             MockValidator(address(enabledValidator)).sudoSetValidSig(data);
@@ -508,7 +508,7 @@ abstract contract KernelTestBase is Test {
         data = abi.encodePacked(data, bytes1(0xff), sigs[sigs.length - 1]);
     }
 
-    function _permissionSignDigest(bytes32 /* digest */, bool success) internal virtual returns (bytes memory data) {
+    function _permissionSignDigest(bytes32 digest, bool success) internal virtual returns (bytes memory data) {
         MockPolicy(address(permissionConfig.policies[0])).sudoSetPass(
             address(kernel), bytes32(PermissionId.unwrap(enabledPermission)), true
         );
@@ -521,9 +521,8 @@ abstract contract KernelTestBase is Test {
         return "hello world";
     }
 
-    function _getPolicyAndSignerSig(PackedUserOperation memory /* op */, bool /* success */)
+    function _getPolicyAndSignerSig(PackedUserOperation memory op, bool success)
         internal
-        pure
         returns (bytes[] memory data)
     {
         data = new bytes[](3);
@@ -870,7 +869,7 @@ abstract contract KernelTestBase is Test {
             (uint256 res) = abi.decode(result, (uint256));
             assertEq(res, 100);
         } else {
-            (bool success, /* bytes memory result */) =
+            (bool success, bytes memory result) =
                 address(kernel).call(abi.encodeWithSelector(MockFallback.fallbackFunction.selector, uint256(10)));
             assertFalse(success);
             PackedUserOperation memory op = _prepareUserOp(

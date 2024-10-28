@@ -65,7 +65,7 @@ contract MockValidator is IValidator, IHook {
         }
     }
 
-    function preCheck(address /* msgSender */, uint256 /* value */, bytes calldata /* msgData */)
+    function preCheck(address msgSender, uint256 value, bytes calldata msgData)
         external
         payable
         returns (bytes memory hookData)
@@ -73,7 +73,7 @@ contract MockValidator is IValidator, IHook {
         return hex"";
     }
 
-    function postCheck(bytes calldata /* hookData */) external payable {
+    function postCheck(bytes calldata hookData) external payable {
         return;
     }
 }

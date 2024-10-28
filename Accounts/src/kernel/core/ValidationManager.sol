@@ -305,6 +305,7 @@ abstract contract ValidationManager is EIP712, SelectorManager, HookManager, Exe
                 (validationData, userOpSig) = _enableMode(vId, op.signature);
                 userOp.signature = userOpSig;
             }
+
             ValidationType vType = ValidatorLib.getType(vId);
             if (vType == VALIDATION_TYPE_VALIDATOR) {
                 validationData = _intersectValidationData(

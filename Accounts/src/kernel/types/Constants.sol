@@ -25,9 +25,7 @@ ExecType constant EXECTYPE_DEFAULT = ExecType.wrap(0x00);
 ExecType constant EXECTYPE_TRY = ExecType.wrap(0x01);
 
 // --- ERC7579 mode selector ---
-ExecModeSelector constant EXEC_MODE_DEFAULT = ExecModeSelector.wrap(
-    bytes4(0x00000000)
-);
+ExecModeSelector constant EXEC_MODE_DEFAULT = ExecModeSelector.wrap(bytes4(0x00000000));
 
 // --- Kernel permission skip flags ---
 PassFlag constant SKIP_USEROP = PassFlag.wrap(0x0001);
@@ -65,9 +63,7 @@ bytes32 constant KERNEL_WRAPPER_TYPE_HASH = 0x1547321c374afde8a591d972a084b071c5
 // ERC4337 constants
 uint256 constant SIG_VALIDATION_FAILED_UINT = 1;
 uint256 constant SIG_VALIDATION_SUCCESS_UINT = 0;
-ValidationData constant SIG_VALIDATION_FAILED = ValidationData.wrap(
-    SIG_VALIDATION_FAILED_UINT
-);
+ValidationData constant SIG_VALIDATION_FAILED = ValidationData.wrap(SIG_VALIDATION_FAILED_UINT);
 
 // ERC-1271 constants
 bytes4 constant ERC1271_MAGICVALUE = 0x1626ba7e;
