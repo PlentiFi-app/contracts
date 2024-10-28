@@ -282,7 +282,7 @@ contract Kernel is IAccount, IAccountExecute, IERC7579Account, ValidationManager
             // removed 4bytes selector
             context = _doPreHook(hook, msg.value, userOp.callData[4:]);
         }
-        (bool success, bytes memory ret) = ExecLib.executeDelegatecall(address(this), userOp.callData[4:]);
+        (bool success, /* bytes memory  ret */) = ExecLib.executeDelegatecall(address(this), userOp.callData[4:]);
         if (!success) {
             revert ExecutionReverted();
         }
