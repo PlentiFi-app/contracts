@@ -83,7 +83,7 @@ contract ECDSAValidator is IValidator, IHook {
         return ERC1271_MAGICVALUE;
     }
 
-    function preCheck(address msgSender, uint256 value, bytes calldata)
+    function preCheck(address msgSender, uint256 /* value */, bytes calldata)
         external
         payable
         override
