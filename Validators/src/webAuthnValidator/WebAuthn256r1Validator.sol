@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GNU Public License v3.0
 pragma solidity >=0.8.19 <0.9.0;
 
-import {SCL_ECDSAB4} from "./SCL/lib/libSCL_ecdsab4.sol";
+import {SCL_ECDSAB4} from "SCL/lib/libSCL_ecdsab4.sol";
 import {Base64} from "solady/utils/Base64.sol";
-import {p, a, gx, gy, gpow2p128_x, gpow2p128_y, n} from "./SCL/fields/SCL_secp256r1.sol";
+import {p, a, gx, gy, gpow2p128_x, gpow2p128_y, n} from "SCL/fields/SCL_secp256r1.sol";
 
 import {IValidator, IModule, PackedUserOperation} from "../interfaces/IERC7579Modules.sol";
 import {SclVerifier} from "./SclVerifier.sol";

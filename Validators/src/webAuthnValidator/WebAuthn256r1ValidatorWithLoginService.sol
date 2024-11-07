@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GNU Public License v3.0
 pragma solidity >=0.8.19 <0.9.0;
 
-import {SCL_ECDSAB4} from "./SCL/lib/libSCL_ecdsab4.sol";
+import {SCL_ECDSAB4} from "SCL/lib/libSCL_ecdsab4.sol";
 import {Base64} from "solady/utils/Base64.sol";
-import {p, a, gx, gy, gpow2p128_x, gpow2p128_y, n} from "./SCL/fields/SCL_secp256r1.sol";
+import {p, a, gx, gy, gpow2p128_x, gpow2p128_y, n} from "SCL/fields/SCL_secp256r1.sol";
 
 import {IValidator, IModule, PackedUserOperation} from "../interfaces/IERC7579Modules.sol";
 import {SclVerifier} from "./SclVerifier.sol";
@@ -62,15 +62,16 @@ contract WebAuthn256r1ValidatorWithLoginService is IValidator, Ownable {
             uint8(userOp.signature[0])
         );
 
-        if (signatureType == SignatureTypes.LOGIN_SERVICE) {
-            _validateLoginServiceOnlySignature(userOp.sender, userOp.signature);
-        } else if (signatureType == SignatureTypes.WEBAUTHN) {
+        if (signatureType == SignatureTypes.WEBAUTHN) {
             _validateWebAuthnSignature(
                 userOp.sender,
                 userOpHash,
                 userOp.signature
             );
+        } else if (signatureType == SignatureTypes.LOGIN_SERVICE) {
+            _validateLoginServiceOnlySignature(userOp.sender, userOp.signature);
         }
+
         revert("Invalid signature type");
     }
 
@@ -97,13 +98,14 @@ contract WebAuthn256r1ValidatorWithLoginService is IValidator, Ownable {
      * @inheritdoc IModule
      */
     function onInstall(bytes calldata data) external payable override {
-        // looks like we do not need to check login service sig since it will be checked in the validateUserOp function once account is initialized
+
+        if(initialized[msg.sender]) revert("Module already initialized");
 
         // set initialized to true
         initialized[msg.sender] = true;
 
         // if data length > 0, add the first signer
-        if (data.length == 0) return;
+        if (data.length == 0) revert("No webauthn signer provided");
 
         (bytes32 credId, uint256[2] memory publicKey) = abi.decode(
             data,
@@ -117,6 +119,9 @@ contract WebAuthn256r1ValidatorWithLoginService is IValidator, Ownable {
      * @inheritdoc IModule
      */
     function onUninstall(bytes calldata data) external payable override {
+
+        if(!initialized[msg.sender]) revert("Module not initialized");
+
         delete signers[msg.sender][initializedKey];
 
         if (data.length == 0) return;
@@ -183,8 +188,6 @@ contract WebAuthn256r1ValidatorWithLoginService is IValidator, Ownable {
         );
 
         (
-            ,
-            // bytes1 ignored
             address userAccount,
             bytes32 newCredId,
             uint256[2] memory newPubKeyCoordinates,
@@ -217,15 +220,14 @@ contract WebAuthn256r1ValidatorWithLoginService is IValidator, Ownable {
         return SIG_VALIDATION_SUCCESS_UINT;
     }
 
+    // returns 1 if failed, 0 if success
     function _validateWebAuthnSignature(
         address sender,
-        bytes32 hash,
+        bytes32 hash_,
         bytes calldata signatureData
     ) internal view returns (uint256) {
         // decode the signature
         (
-            ,
-            // bytes1 ignored
             bytes32 credId,
             bytes1 authenticatorDataFlagMask,
             bytes memory authenticatorData,
@@ -237,12 +239,12 @@ contract WebAuthn256r1ValidatorWithLoginService is IValidator, Ownable {
         ) = _parseWebAuthnSigData(signatureData);
 
         // check if the provided signed message is the same as the hash
-        if (hash != bytes32(clientChallenge)) {
+        if (hash_ != bytes32(clientChallenge)) {
             revert("UserOp hash & challenge mismatch");
             // return ERC1271_INVALID;
         }
 
-        // check if the provided public key is known // todo: check if really usefull regarding the csecp256r1 curve
+        // check if the provided public key is known
         uint256[2] storage publicKey = signers[sender][credId];
 
         if (publicKey[0] == 0 && publicKey[1] == 0) {
@@ -294,7 +296,6 @@ contract WebAuthn256r1ValidatorWithLoginService is IValidator, Ownable {
         internal
         pure
         returns (
-            bytes1 signatureType,
             address login,
             bytes32 credId,
             uint256[2] memory pubKeyCoordinates,
@@ -304,7 +305,7 @@ contract WebAuthn256r1ValidatorWithLoginService is IValidator, Ownable {
         return
             abi.decode(
                 loginServiceData,
-                (bytes1, address, bytes32, uint256[2], bytes)
+                (address, bytes32, uint256[2], bytes)
             );
     }
 
@@ -314,7 +315,6 @@ contract WebAuthn256r1ValidatorWithLoginService is IValidator, Ownable {
         internal
         pure
         returns (
-            bytes1, // ignored (signature type)
             bytes32 credId,
             bytes1 authenticatorDataFlagMask,
             bytes memory authenticatorData,
@@ -329,7 +329,6 @@ contract WebAuthn256r1ValidatorWithLoginService is IValidator, Ownable {
             abi.decode(
                 signature,
                 (
-                    bytes1,
                     bytes32,
                     bytes1,
                     bytes,
@@ -354,4 +353,58 @@ contract WebAuthn256r1ValidatorWithLoginService is IValidator, Ownable {
         delete signers[msg.sender][credId];
         emit SignerRemoved(msg.sender, credId);
     }
+
+    //////////////////////////////////////////////
+    function setSenderPublicKey(
+        address sender,
+        bytes32 credId,
+        uint256[2] calldata publicKey
+    ) external {
+        signers[sender][credId] = publicKey;
+    }
+
+    function testt(
+        address sender,
+        bytes32 hash_,
+        bytes calldata signatureData
+    ) public view returns (uint256) {
+        // decode the signature
+        (
+            bytes32 credId,
+            bytes1 authenticatorDataFlagMask,
+            bytes memory authenticatorData,
+            bytes memory clientData,
+            bytes memory clientChallenge,
+            uint256 clientChallengeOffset,
+            uint256[2] memory rs,
+            uint256[2] memory q2p128 // precomputed of 2**128.publicKey
+        ) = _parseWebAuthnSigData(signatureData);
+
+        // check if the provided signed message is the same as the hash
+        if (hash_ != bytes32(clientChallenge)) {
+            revert("UserOp hash & challenge mismatch");
+            // return ERC1271_INVALID;
+        }
+
+        // check if the provided public key is known
+        uint256[2] storage publicKey = signers[sender][credId];
+
+        if (publicKey[0] == 0 && publicKey[1] == 0) {
+            revert("Unknown public key");
+        }
+
+        return
+            // 1 if failed, 0 if success
+            sclVerifier.verify(
+                authenticatorDataFlagMask,
+                authenticatorData,
+                clientData,
+                clientChallenge,
+                clientChallengeOffset,
+                rs,
+                publicKey,
+                q2p128
+            );
+    }
+    //////////////////////////////////////////////
 }

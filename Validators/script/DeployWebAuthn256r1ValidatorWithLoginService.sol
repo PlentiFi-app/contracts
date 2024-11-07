@@ -8,7 +8,7 @@ import "forge-std/Script.sol";
 
 // address deployer: 0xaF06998b48c1cC58261c26dfAe284228C7A65bDF
 // command:
-// forge script script/DeployWebAuthn256r1ValidatorWithLoginService.sol --broadcast -vvv --rpc-url http://127.0.0.1:7545 --private-key 
+// forge script script/DeployWebAuthn256r1ValidatorWithLoginService.sol --broadcast -vvv --rpc-url http://127.0.0.1:8545 --private-key 
 contract DeployAll is Script {
     function run() external {
         vm.startBroadcast();

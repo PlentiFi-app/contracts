@@ -2,9 +2,9 @@
 
 pragma solidity >=0.8.19 <0.9.0;
 
-import {SCL_ECDSAB4} from "./SCL/lib/libSCL_ecdsab4.sol";
+import {SCL_ECDSAB4} from "SCL/lib/libSCL_ecdsab4.sol";
 import {Base64} from "lib/solady/src/utils/Base64.sol";
-import {p, a, gx, gy, gpow2p128_x, gpow2p128_y, n} from "./SCL/fields/SCL_secp256r1.sol";
+import {p, a, gx, gy, gpow2p128_x, gpow2p128_y, n} from "SCL/fields/SCL_secp256r1.sol";
 import {SIG_VALIDATION_SUCCESS_UINT, SIG_VALIDATION_FAILED_UINT} from "../constants.sol";
 
 contract SclVerifier {
@@ -46,7 +46,7 @@ contract SclVerifier {
         uint256 clientChallengeOffset,
         uint256[2] calldata rs,
         uint256[2] calldata publicKey,
-        uint[2] calldata q2p128 // precomputed of 2**128.publicKey
+        uint[2] calldata q2p128 // precomputed of 2**128 * publicKey
     ) external view returns (uint256) {
 
         unchecked {
