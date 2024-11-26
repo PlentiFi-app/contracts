@@ -11,79 +11,111 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /**
- * A sample paymaster that uses external service to decide whether to pay for the UserOp.
- * The paymaster trusts an external signer to sign the transaction.
- * The calling user must pass the UserOp to that external signer first, which performs
- * whatever off-chain verification before signing the UserOp.
- * Note that this signature is NOT a replacement for the account-specific signature:
- * - the paymaster checks a signature to agree to PAY for GAS.
- * - the account checks a signature to prove identity and account ownership.
+ * @title Paymaster
+ * @dev A paymaster contract that validates user operations through an external signer.
+ * This paymaster requires user operations to be pre-approved by a trusted external signer
+ * before it agrees to pay for the gas fees. The external signer performs off-chain
+ * validations before signing the operation.
  */
 contract Paymaster is BasePaymaster {
-    // using UserOperationLib for PackedUserOperation;
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
 
-    string public constant paymasterId =
-        "Plentifi-Paymaster-beta1.0.0-entrypointV0.7";
+    mapping(address => bool) approvedBundlers;
 
+    /**
+     * @dev Struct containing validation and tracking data for paymaster operations (without the signature)
+     * @param validUntil Timestamp until which the operation is valid
+     * @param validAfter Timestamp after which the operation becomes valid
+     * @param sponsorUUID Unique identifier for tracking sponsored transactions
+     * @param allowAnyBundler If true, any bundler can include this operation
+     */
+    struct PaymasterData {
+        uint48 validUntil;
+        uint48 validAfter;
+        uint128 sponsorUUID;
+        bool allowAnyBundler;
+    }
+
+    /// @dev Gas allocated for post-operation processing
+    uint256 public constant POST_OP_GAS = 0;
+
+    /// @dev Version identifier for this paymaster implementation
+    string public constant paymasterId =
+        "Plentifi-Paymaster-v0.0.1-entrypointV0.7";
+
+    /// @dev Address of the trusted signer that validates operations
     address public immutable verifyingSigner;
 
+    /**
+     * @dev Emitted when a user operation is successfully sponsored
+     * @param userOpSender Address of the account that initiated the operation
+     * @param actualGasCost Total gas cost incurred
+     * @param actualUserOpFeePerGas Gas price used for the operation
+     */
     event UserOperationSponsored(
-        address indexed sender,
+        address indexed userOpSender,
         uint256 actualGasCost,
-        uint256 actualUserOpFeePerGas
+        uint128 actualUserOpFeePerGas
     );
 
+    /**
+     * @dev Constructor to initialize the paymaster
+     * @param _entryPoint Address of the EntryPoint contract
+     * @param _verifyingSigner Address of the trusted external signer
+     * @param _owner Address that will own this contract
+     */
     constructor(
         IEntryPoint _entryPoint,
         address _verifyingSigner,
         address _owner
     ) BasePaymaster(_entryPoint) {
         verifyingSigner = _verifyingSigner;
-
-        // need to transfer ownership because when deploying through the factory, the factory is the owner and we cannot change that.
         transferOwnership(_owner);
     }
 
     /**
-     * return the hash we're going to sign off-chain (and validate on-chain)
-     * this method is called by the off-chain service, to sign the request.
-     * it is called on-chain from the validatePaymasterUserOp, to validate the signature.
-     * note that this signature covers all fields of the UserOperation, except the "paymasterAndData",
-     * which will carry the signature itself.
+     * @dev Generates a hash for signing/validating the user operation
+     * @param userOp The user operation to hash
+     * @param pmData Paymaster data associated with the operation
+     * @return bytes32 Hash of the operation data
      */
     function getHash(
         PackedUserOperation calldata userOp,
-        uint48 validUntil,
-        uint48 validAfter
+        PaymasterData memory pmData
     ) public view returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     userOp.sender,
-                    userOp.nonce,
                     keccak256(userOp.initCode),
                     keccak256(userOp.callData),
                     block.chainid,
-                    address(this),
-                    validUntil,
-                    validAfter
+                    pmData.validAfter,
+                    pmData.validUntil,
+                    pmData.sponsorUUID
                 )
             );
     }
 
+    /**
+     * @dev Parses the paymaster and data field from the user operation
+     * @param paymasterAndData Raw bytes containing paymaster data and signature
+     * @return pmData Structured paymaster data
+     * @return signature Signature bytes from the trusted signer
+     */
     function parsePaymasterAndData(
         bytes calldata paymasterAndData
     )
         internal
         pure
-        returns (uint48 validUntil, uint48 validAfter, bytes memory signature)
+        returns (PaymasterData memory pmData, bytes memory signature)
     {
-        (validUntil, validAfter, signature) = abi.decode(
-            paymasterAndData,
-            (uint48, uint48, bytes)
-        );
+        pmData.validUntil = uint48(bytes6(paymasterAndData[0:6]));
+        pmData.validAfter = uint48(bytes6(paymasterAndData[6:12]));
+        pmData.sponsorUUID = uint128(bytes16(paymasterAndData[12:28]));
+        pmData.allowAnyBundler = paymasterAndData[28] != 0;
+        signature = paymasterAndData[29:];
     }
 
     /**
@@ -91,42 +123,48 @@ contract Paymaster is BasePaymaster {
      */
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,
-        bytes32, // userOpHash -> // todo: add user ophash in the paymaster signed data
-        uint256 // maxCost // todo: check if max cost includes postOp cost or not ?
+        bytes32 /* userOpHash */,
+        uint256 /* maxCost */
     )
         internal
         virtual
         override
         returns (bytes memory context, uint256 validationData)
     {
-        (uint48 validUntil, uint48 validAfter, bytes memory signature) = parsePaymasterAndData(
-            userOp.paymasterAndData[PAYMASTER_DATA_OFFSET:] // PAYMASTER_DATA_OFFSET = len(address) + len(PAYMASTER_VALIDATION_GAS)
-        );
-        // revert("alphabet");
+        (
+            PaymasterData memory paymasterData,
+            bytes memory signature
+        ) = parsePaymasterAndData(
+                userOp.paymasterAndData[/* PAYMASTER_DATA_OFFSET */ 20:]
+            );
 
-        // ECDSA library supports both 64 and 65-byte long signatures.
-        // we only "require" it here so that the revert reason on invalid signature will be of "VerifyingPaymaster", and not "ECDSA"
+        if (!paymasterData.allowAnyBundler && !approvedBundlers[tx.origin])
+            revert("Bundler not approved");
+
         require(
             signature.length == 64 || signature.length == 65,
             "VerifyingPaymaster: invalid signature length in paymasterAndData"
         );
 
-        bytes32 hash = getHash(userOp, validUntil, validAfter)
-            .toEthSignedMessageHash();
+        bytes32 hash = getHash(userOp, paymasterData).toEthSignedMessageHash();
 
-        // don't revert on signature failure: return SIG_VALIDATION_FAILED
         if (verifyingSigner != ECDSA.recover(hash, signature)) {
-            revert("VerifyingPaymaster: invalid signature"); // for debug
-            // return ("", _packValidationData(true, validUntil, validAfter));
+            revert("VerifyingPaymaster: invalid signature");
         }
 
-        bytes memory _context = abi.encode(userOp);
+        bytes memory _context = abi.encode(
+            userOp.sender,
+            paymasterData.sponsorUUID
+        );
 
-        // no need for other on-chain validation: entire UserOp should have been checked
-        // by the external service prior to signing it.
-        return (_context, _packValidationData(false, validUntil, validAfter));
-
-        // return (_context, _packValidationData(false, uint48(block.timestamp+10*60), 1));
+        return (
+            _context,
+            _packValidationData(
+                false,
+                paymasterData.validUntil,
+                paymasterData.validAfter
+            )
+        );
     }
 
     /**
@@ -138,16 +176,20 @@ contract Paymaster is BasePaymaster {
         uint256 actualGasCost,
         uint256 actualUserOpFeePerGas
     ) internal virtual override {
-        PackedUserOperation memory userOp = abi.decode(
+        (address userOpSender, uint128 sponsorUUID) = abi.decode(
             context,
-            (PackedUserOperation)
+            (address, uint128)
         );
+
+        uint256 actualGasCostWithPostOp = actualGasCost +
+            POST_OP_GAS *
+            actualUserOpFeePerGas;
 
         if (mode != PostOpMode.postOpReverted) {
             emit UserOperationSponsored(
-                userOp.sender,
-                actualGasCost,
-                actualUserOpFeePerGas
+                userOpSender,
+                actualGasCostWithPostOp,
+                sponsorUUID
             );
         }
     }
