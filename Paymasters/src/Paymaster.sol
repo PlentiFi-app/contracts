@@ -7,9 +7,9 @@ pragma solidity ^0.8.23;
 import "@account-abstraction/contracts/core/BasePaymaster.sol";
 import "@account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import "@account-abstraction/contracts/core/Helpers.sol";
-import "openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-// import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 /**
  * A sample paymaster that uses external service to decide whether to pay for the UserOp.
  * The paymaster trusts an external signer to sign the transaction.
@@ -22,6 +22,7 @@ import "openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 contract Paymaster is BasePaymaster {
     // using UserOperationLib for PackedUserOperation;
     using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
 
     string public constant paymasterId =
         "Plentifi-Paymaster-beta1.0.0-entrypointV0.7";
@@ -98,13 +99,9 @@ contract Paymaster is BasePaymaster {
         override
         returns (bytes memory context, uint256 validationData)
     {
-        (
-            uint48 validUntil,
-            uint48 validAfter,
-            bytes memory signature
-        ) = parsePaymasterAndData(
-                userOp.paymasterAndData[PAYMASTER_DATA_OFFSET:] // PAYMASTER_DATA_OFFSET = len(address) + len(PAYMASTER_VALIDATION_GAS)
-            );
+        (uint48 validUntil, uint48 validAfter, bytes memory signature) = parsePaymasterAndData(
+            userOp.paymasterAndData[PAYMASTER_DATA_OFFSET:] // PAYMASTER_DATA_OFFSET = len(address) + len(PAYMASTER_VALIDATION_GAS)
+        );
         // revert("alphabet");
 
         // ECDSA library supports both 64 and 65-byte long signatures.

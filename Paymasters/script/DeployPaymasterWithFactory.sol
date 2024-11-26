@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {IEntryPoint} from "@account-abstraction/contracts/core/EntryPoint.sol";
-import {Paymaster} from "../../src/Paymaster/Paymaster.sol";
+import {Paymaster} from "../src/Paymaster.sol";
 import {PlentiFiContractDeployer} from "./ScDeployer.sol";
 import "forge-std/Script.sol";
 
