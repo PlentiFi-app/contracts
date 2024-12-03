@@ -105,7 +105,7 @@ contract PaymasterValidateTest is Test {
             ethSignedHash
         );
         bytes memory signature = abi.encodePacked(r, s, v);
-        console.logBytes(signature);
+        // console.logBytes(signature);
         return
             abi.encodePacked(
                 bytes6(validUntil),
@@ -294,6 +294,42 @@ contract PaymasterValidateTest is Test {
             "Validation should be in future"
         );
     }
+
+    // function testHardcodedPmData() public {
+    //     ////////////////////////////// 0x00174876e800000000000000000000000000000000000000000004d2019a03514f7ccc9696ee37405ce4cf072e94dc37e3ba59fe8dbda10b1178f407e23c21ecbd03bf64f5028b2cb877394708124fc67f51a30adcc6e82dfb46735e2d1b
+    //     bytes
+    //         memory paymasterAndData = "0x0000674dd4b70000674dd70f0000000000000000000000003ade68b1013847c142f31cc6c6aeec1605d439e78cec6985f93bf5af9db756e72ad11cacd9417ee3ab868342718c9a034bb80bb4123305129ffde2b058a9447cd2ee2f39ad1b";
+
+    //     PackedUserOperation memory userOp = createMockUserOp();
+
+    //     uint48 validUntil = uint48(block.timestamp + 1 hours);
+    //     uint48 validAfter = uint48(block.timestamp);
+    //     uint128 sponsorUUID = 12345;
+    //     bool allowAnyBundler = true;
+
+    //     userOp.paymasterAndData = abi.encodePacked(
+    //         address(paymaster),
+    //         paymasterAndData
+    //     );
+
+    //     // call the entrypoint to send the transaction
+    //     vm.prank(address(entryPoint));
+    //     (bytes memory context, uint256 validationData) = paymaster
+    //         .validatePaymasterUserOp(userOp, bytes32(0), 0);
+    //     vm.stopPrank();
+
+    //     // Verify context data
+    //     (address contextSender, uint128 contextUUID) = abi.decode(
+    //         context,
+    //         (address, uint128)
+    //     );
+    //     assertEq(contextSender, userOp.sender);
+    //     assertEq(contextUUID, sponsorUUID);
+
+    //     // Verify validation timestamps
+    //     assertEq(uint48(validationData >> 160), validUntil);
+    //     assertEq(uint48(validationData >> 208), validAfter);
+    // }
 
     receive() external payable {}
 }

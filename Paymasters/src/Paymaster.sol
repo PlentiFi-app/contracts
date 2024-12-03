@@ -114,7 +114,7 @@ contract Paymaster is BasePaymaster {
         pmData.validUntil = uint48(bytes6(paymasterAndData[0:6]));
         pmData.validAfter = uint48(bytes6(paymasterAndData[6:12]));
         pmData.sponsorUUID = uint128(bytes16(paymasterAndData[12:28]));
-        pmData.allowAnyBundler = paymasterAndData[28] != 0;
+        pmData.allowAnyBundler = paymasterAndData[28] != 0x00;
         signature = paymasterAndData[29:];
     }
 
@@ -135,7 +135,7 @@ contract Paymaster is BasePaymaster {
             PaymasterData memory paymasterData,
             bytes memory signature
         ) = parsePaymasterAndData(
-                userOp.paymasterAndData[/* PAYMASTER_DATA_OFFSET */ 20:]
+                userOp.paymasterAndData[/* PAYMASTER_DATA_OFFSET */ /* 20: */ 52:]
             );
 
         if (!paymasterData.allowAnyBundler && !approvedBundlers[tx.origin])
@@ -148,9 +148,7 @@ contract Paymaster is BasePaymaster {
 
         bytes32 hash = getHash(userOp, paymasterData).toEthSignedMessageHash();
 
-        if (verifyingSigner != ECDSA.recover(hash, signature)) {
-            revert("VerifyingPaymaster: invalid signature");
-        }
+        bool isSignatureValid = verifyingSigner != ECDSA.recover(hash, signature);
 
         bytes memory _context = abi.encode(
             userOp.sender,
@@ -160,7 +158,7 @@ contract Paymaster is BasePaymaster {
         return (
             _context,
             _packValidationData(
-                false,
+                !isSignatureValid,
                 paymasterData.validUntil,
                 paymasterData.validAfter
             )
