@@ -55,20 +55,20 @@ const config: HardhatUserConfig = {
   },
   networks: {
     local: {
-      url: process.env.NETWORK_URL,
-      accounts: [process.env.PRIVATE_KEY!],
+      url: process.env.NETWORK_URL || "0x0000000000000000000000000000000000000000000000000000000000000000",
+      accounts: [process.env.PRIVATE_KEY || "0x0000000000000000000000000000000000000000000000000000000000000000"],
     },
     holesky: {
-      url: process.env.HOLESKY_TESTNET_URL,
-      accounts: [process.env.PRIVATE_KEY!],
+      url: process.env.HOLESKY_TESTNET_URL || "0x0000000000000000000000000000000000000000000000000000000000000000",
+      accounts: [process.env.PRIVATE_KEY || "0x0000000000000000000000000000000000000000000000000000000000000000"],
     },
     arbitrumSepolia: {
-      url: process.env.ARBITRUM_SEPOLIA_URL,
-      accounts: [process.env.PRIVATE_KEY!],
+      url: process.env.ARBITRUM_SEPOLIA_URL || "0x0000000000000000000000000000000000000000000000000000000000000000",
+      accounts: [process.env.PRIVATE_KEY || "0x0000000000000000000000000000000000000000000000000000000000000000"],
     },
     scrollSepolia: {
-      url: process.env.SCROLL_SEPOLIA_URL,
-      accounts: [process.env.PRIVATE_KEY!],
+      url: process.env.SCROLL_SEPOLIA_URL || "0x0000000000000000000000000000000000000000000000000000000000000000",
+      accounts: [process.env.PRIVATE_KEY || "0x0000000000000000000000000000000000000000000000000000000000000000"],
     }
   },
 };

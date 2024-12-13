@@ -14,6 +14,10 @@ contract WebAuthn256r1Validator is IValidator {
     string public constant name = "PlentiFi.WebAuthn256r1Validator-v0.0.1";
     SclVerifier public immutable sclVerifier;
 
+    // number of signers per smart account
+    mapping(address => uint256) public signerCount;
+    // mapping of signers for each smart account
+    // signers[smartAccount][credId] = publicKey
     mapping(address => mapping(bytes32 => uint256[2])) public signers;
 
     error InvalidAuthenticatorData();
@@ -56,12 +60,12 @@ contract WebAuthn256r1Validator is IValidator {
      * @inheritdoc IModule
      */
     function onInstall(bytes calldata data) external payable override {
+        require(signerCount[msg.sender] == 0, "Validator already installed");
         // add the first signer
         (bytes32 credId, uint256[2] memory publicKey) = abi.decode(
             data,
             (bytes32, uint256[2])
         );
-
         _addSigner(credId, publicKey);
     }
 
@@ -77,7 +81,7 @@ contract WebAuthn256r1Validator is IValidator {
         bytes32[] memory credIds = abi.decode(data, (bytes32[]));
 
         for (uint256 i = 0; i < credIds.length; i++) {
-            delete signers[msg.sender][credIds[i]];
+            _removeSigner(credIds[i]);
         }
 
         return;
@@ -86,7 +90,7 @@ contract WebAuthn256r1Validator is IValidator {
     /**
      * @inheritdoc IModule
      */
-    function isModuleType(uint256 moduleTypeId) external view returns (bool) {
+    function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
         return moduleTypeId == MODULE_TYPE_VALIDATOR;
     }
 
@@ -94,7 +98,7 @@ contract WebAuthn256r1Validator is IValidator {
      * @inheritdoc IModule
      */
     function isInitialized(address smartAccount) external view returns (bool) {
-        return signers[smartAccount][initializedKey][0] != 0;
+        return signerCount[smartAccount] > 0;
     }
 
     function addSigner(bytes32 credId, uint256[2] calldata publicKey) external {
@@ -167,32 +171,6 @@ contract WebAuthn256r1Validator is IValidator {
             );
     }
 
-    function _generateMessage(
-        bytes1 authenticatorDataFlagMask,
-        bytes calldata authenticatorData,
-        bytes calldata clientData,
-        bytes calldata clientChallenge,
-        uint256 clientChallengeOffset
-    ) internal pure returns (bytes32 message) {
-        unchecked {
-            if ((authenticatorData[32] & authenticatorDataFlagMask) == 0)
-                revert InvalidAuthenticatorData();
-            if (clientChallenge.length == 0) revert InvalidChallenge();
-            bytes memory challengeEncoded = bytes(
-                Base64.encode(clientChallenge, true, true)
-            );
-            bytes32 challengeHashed = keccak256(
-                clientData[clientChallengeOffset:(clientChallengeOffset +
-                    challengeEncoded.length)]
-            );
-            if (keccak256(challengeEncoded) != challengeHashed)
-                revert InvalidClientData();
-            message = sha256(
-                abi.encodePacked(authenticatorData, sha256(clientData))
-            );
-        }
-    }
-
     function _parseSigData(
         bytes calldata signature
     )
@@ -227,11 +205,19 @@ contract WebAuthn256r1Validator is IValidator {
 
     function _addSigner(bytes32 credId, uint256[2] memory publicKey) internal {
         signers[msg.sender][credId] = publicKey;
+        signerCount[msg.sender]++;
         emit SignerAdded(msg.sender, credId);
     }
 
     function _removeSigner(bytes32 credId) internal {
+        if (
+            signers[msg.sender][credId][0] == 0 &&
+            signers[msg.sender][credId][1] == 0
+        ) {
+            revert("Unknown public key");
+        }
         delete signers[msg.sender][credId];
+        signerCount[msg.sender]--;
         emit SignerRemoved(msg.sender, credId);
     }
 }

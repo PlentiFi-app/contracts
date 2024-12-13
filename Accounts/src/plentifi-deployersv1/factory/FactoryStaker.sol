@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./KernelFactory.sol";
+import "./KernelOpenFactory.sol";
 import "../../kernel/interfaces/IEntryPoint.sol";
 import "solady/auth/Ownable.sol";
 
@@ -18,7 +19,7 @@ contract PlentiFiFactoryStaker is Ownable {
 
     bool public locked;
 
-    mapping(PlentiFiAccountFactory => bool) public approved;
+    mapping(address => bool) public approved;
 
     event StakeWithdrawn(
         address indexed entryPoint,
@@ -53,10 +54,38 @@ contract PlentiFiFactoryStaker is Ownable {
      */
     function deployWithFactory(
         PlentiFiAccountFactory factory,
+        bytes calldata authorizationData,
         bytes calldata createData,
         bytes32 salt
     ) external payable returns (address) {
-        if (!approved[factory]) {
+        if (!approved[address(factory)]) {
+            revert NotApprovedFactory();
+        }
+        if (locked) {
+            revert Locked();
+        }
+
+        return
+            factory.createAccount{value: msg.value}(
+                authorizationData,
+                createData,
+                salt
+            );
+    }
+
+    /**
+     * @notice Deploy an account using an approved open factory
+     * @param factory The account factory to use
+     * @param createData Initialization data for the account
+     * @param salt Unique identifier for the deployment
+     * @return address The address of the deployed account
+     */
+    function deployWithOpenFactory(
+        PlentiFiOpenAccountFactory factory,
+        bytes calldata createData,
+        bytes32 salt
+    ) external payable returns (address) {
+        if (!approved[address(factory)]) {
             revert NotApprovedFactory();
         }
         if (locked) {
@@ -72,7 +101,7 @@ contract PlentiFiFactoryStaker is Ownable {
      * @param approval New approval status
      */
     function approveFactory(
-        PlentiFiAccountFactory factory,
+        address factory,
         bool approval
     ) external payable onlyOwner {
         if (address(factory) == address(0)) revert ZeroAddress();

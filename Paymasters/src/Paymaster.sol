@@ -20,9 +20,6 @@ import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 contract Paymaster is BasePaymaster {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
-
-    mapping(address => bool) approvedBundlers;
-
     /**
      * @dev Struct containing validation and tracking data for paymaster operations (without the signature)
      * @param validUntil Timestamp until which the operation is valid
@@ -45,7 +42,10 @@ contract Paymaster is BasePaymaster {
         "Plentifi-Paymaster-v0.0.1-entrypointV0.7";
 
     /// @dev Address of the trusted signer that validates operations
-    address public immutable verifyingSigner;
+    mapping(address => bool) public approvedSigners;
+
+    /// @dev Address of the trusted bundler that can include operations
+    mapping(address => bool) approvedBundlers;
 
     /**
      * @dev Emitted when a user operation is successfully sponsored
@@ -70,7 +70,7 @@ contract Paymaster is BasePaymaster {
         address _verifyingSigner,
         address _owner
     ) BasePaymaster(_entryPoint) {
-        verifyingSigner = _verifyingSigner;
+        approvedSigners[_verifyingSigner] = true;
         transferOwnership(_owner);
     }
 
@@ -135,7 +135,8 @@ contract Paymaster is BasePaymaster {
             PaymasterData memory paymasterData,
             bytes memory signature
         ) = parsePaymasterAndData(
-                userOp.paymasterAndData[/* PAYMASTER_DATA_OFFSET */ /* 20: */ 52:]
+                userOp
+                    .paymasterAndData[/* PAYMASTER_DATA_OFFSET */ /* 20: */ 52:]
             );
 
         if (!paymasterData.allowAnyBundler && !approvedBundlers[tx.origin])
@@ -148,7 +149,7 @@ contract Paymaster is BasePaymaster {
 
         bytes32 hash = getHash(userOp, paymasterData).toEthSignedMessageHash();
 
-        bool isSignatureValid = verifyingSigner != ECDSA.recover(hash, signature);
+        bool isSignatureValid = approvedSigners[ECDSA.recover(hash, signature)];
 
         bytes memory _context = abi.encode(
             userOp.sender,
@@ -189,6 +190,29 @@ contract Paymaster is BasePaymaster {
                 actualGasCostWithPostOp,
                 sponsorUUID
             );
+        }
+    }
+
+    /**
+     * @dev Sets the approval status of a signer
+     * @param signer Address of the signer
+     * @param status Approval status
+     */
+    function setSigners(address signer, bool status) external onlyOwner {
+        approvedSigners[signer] = status;
+    }
+
+    /**
+     * @dev Sets the approval status of a list of signers
+     * @param signers Array of signer addresses
+     * @param status Approval status
+     */
+    function setSignersBatch(
+        address[] calldata signers,
+        bool[] calldata status
+    ) external onlyOwner {
+        for (uint256 i = 0; i < signers.length; i++) {
+            approvedSigners[signers[i]] = status[i];
         }
     }
 }
