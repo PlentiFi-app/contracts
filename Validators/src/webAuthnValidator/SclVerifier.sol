@@ -8,9 +8,9 @@ import {p, a, gx, gy, gpow2p128_x, gpow2p128_y, n} from "SCL/fields/SCL_secp256r
 import {SIG_VALIDATION_SUCCESS_UINT, SIG_VALIDATION_FAILED_UINT} from "../constants.sol";
 
 contract SclVerifier {
-    // error InvalidAuthenticatorData();
-    // error InvalidClientData();
-    // error InvalidChallenge();
+    error InvalidAuthenticatorData();
+    error InvalidClientData();
+    error InvalidChallenge();
 
     function generateMessage(
         bytes1 authenticatorDataFlagMask,
@@ -21,8 +21,8 @@ contract SclVerifier {
     ) internal pure returns (bytes32 message) {
         unchecked {
             if ((authenticatorData[32] & authenticatorDataFlagMask) == 0)
-                revert ("InvalidAuthenticatorData()");
-            if (clientChallenge.length == 0) revert ("InvalidChallenge()");
+                revert InvalidAuthenticatorData();
+            if (clientChallenge.length == 0) revert InvalidChallenge();
             bytes memory challengeEncoded = bytes(
                 Base64.encode(clientChallenge, true, true)
             );
@@ -31,7 +31,7 @@ contract SclVerifier {
                     challengeEncoded.length)]
             );
             if (keccak256(challengeEncoded) != challengeHashed)
-                revert ("InvalidClientData()");
+                revert InvalidClientData();
             message = sha256(
                 abi.encodePacked(authenticatorData, sha256(clientData))
             );
@@ -48,7 +48,6 @@ contract SclVerifier {
         uint256[2] calldata publicKey,
         uint[2] calldata q2p128 // precomputed of 2**128 * publicKey
     ) external view returns (uint256) {
-
         unchecked {
             bytes32 message = generateMessage(
                 authenticatorDataFlagMask,

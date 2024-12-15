@@ -1,13 +1,9 @@
 // SPDX-License-Identifier: GNU Public License v3.0
 pragma solidity >=0.8.19 <0.9.0;
 
-import {SCL_ECDSAB4} from "SCL/lib/libSCL_ecdsab4.sol";
-import {Base64} from "solady/utils/Base64.sol";
-import {p, a, gx, gy, gpow2p128_x, gpow2p128_y, n} from "SCL/fields/SCL_secp256r1.sol";
-
 import {IValidator, IModule, PackedUserOperation} from "../interfaces/IERC7579Modules.sol";
 import {SclVerifier} from "./SclVerifier.sol";
-import {ERC1271_MAGICVALUE, ERC1271_INVALID, MODULE_TYPE_VALIDATOR, SIG_VALIDATION_SUCCESS_UINT} from "../constants.sol";
+import {ERC1271_MAGICVALUE, ERC1271_INVALID, MODULE_TYPE_VALIDATOR, SIG_VALIDATION_SUCCESS_UINT, SIG_VALIDATION_FAILED_UINT} from "../constants.sol";
 
 contract WebAuthn256r1Validator is IValidator {
     bytes32 public constant initializedKey = bytes32(0);
@@ -24,6 +20,18 @@ contract WebAuthn256r1Validator is IValidator {
     error InvalidClientData();
     error InvalidChallenge();
 
+    // Create a struct to hold signature data to avoid stack too deep
+    struct SignatureData {
+        bytes32 credId;
+        bytes1 authenticatorDataFlagMask;
+        bytes authenticatorData;
+        bytes clientData;
+        bytes clientChallenge;
+        uint256 clientChallengeOffset;
+        uint256[2] rs;
+        uint256[2] q2p128;
+    }
+
     event SignerAdded(address indexed smartAccount, bytes32 indexed credId);
     event SignerRemoved(address indexed smartAccount, bytes32 indexed credId);
 
@@ -31,9 +39,6 @@ contract WebAuthn256r1Validator is IValidator {
         sclVerifier = SclVerifier(sclVerifier_);
     }
 
-    /**
-     * @inheritdoc IValidator
-     */
     function validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
@@ -41,9 +46,6 @@ contract WebAuthn256r1Validator is IValidator {
         return _verify(userOp.sender, userOpHash, userOp.signature);
     }
 
-    /**
-     * @inheritdoc IValidator
-     */
     function isValidSignatureWithSender(
         address sender,
         bytes32 hash,
@@ -56,12 +58,8 @@ contract WebAuthn256r1Validator is IValidator {
         }
     }
 
-    /**
-     * @inheritdoc IModule
-     */
     function onInstall(bytes calldata data) external payable override {
         require(signerCount[msg.sender] == 0, "Validator already installed");
-        // add the first signer
         (bytes32 credId, uint256[2] memory publicKey) = abi.decode(
             data,
             (bytes32, uint256[2])
@@ -69,34 +67,21 @@ contract WebAuthn256r1Validator is IValidator {
         _addSigner(credId, publicKey);
     }
 
-    /**
-     * @inheritdoc IModule
-     */
     function onUninstall(bytes calldata data) external payable override {
         delete signers[msg.sender][initializedKey];
 
         if (data.length == 0) return;
 
-        // if the user wants to remove some credIds
         bytes32[] memory credIds = abi.decode(data, (bytes32[]));
-
         for (uint256 i = 0; i < credIds.length; i++) {
             _removeSigner(credIds[i]);
         }
-
-        return;
     }
 
-    /**
-     * @inheritdoc IModule
-     */
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
         return moduleTypeId == MODULE_TYPE_VALIDATOR;
     }
 
-    /**
-     * @inheritdoc IModule
-     */
     function isInitialized(address smartAccount) external view returns (bool) {
         return signerCount[smartAccount] > 0;
     }
@@ -122,7 +107,6 @@ contract WebAuthn256r1Validator is IValidator {
 
     function removeSigners(bytes calldata data) external {
         bytes32[] memory credIds = abi.decode(data, (bytes32[]));
-
         for (uint256 i = 0; i < credIds.length; i++) {
             _removeSigner(credIds[i]);
         }
@@ -133,7 +117,40 @@ contract WebAuthn256r1Validator is IValidator {
         bytes32 hash,
         bytes calldata signatureData
     ) internal view returns (uint256) {
-        // decode the signature
+        bool dryRun = signatureData[0] == 0x01;
+
+        // Parse signature data into struct to avoid stack too deep
+        SignatureData memory sigData = _parseSigData(signatureData);
+
+        // check if the provided signed message is the same as the hash
+        if (!dryRun && hash != bytes32(sigData.clientChallenge)) {
+            revert("UserOp hash & challenge mismatch");
+        }
+
+        // check if the provided public key is known
+        uint256[2] storage publicKey = signers[sender][sigData.credId];
+
+        if (!dryRun && publicKey[0] == 0 && publicKey[1] == 0) {
+            revert("Unknown public key");
+        }
+
+        uint256 isValid = sclVerifier.verify(
+            sigData.authenticatorDataFlagMask,
+            sigData.authenticatorData,
+            sigData.clientData,
+            sigData.clientChallenge,
+            sigData.clientChallengeOffset,
+            sigData.rs,
+            publicKey,
+            sigData.q2p128
+        );
+
+        return dryRun ? SIG_VALIDATION_FAILED_UINT : isValid;
+    }
+
+    function _parseSigData(
+        bytes calldata signature
+    ) internal pure returns (SignatureData memory) {
         (
             bytes32 credId,
             bytes1 authenticatorDataFlagMask,
@@ -142,53 +159,8 @@ contract WebAuthn256r1Validator is IValidator {
             bytes memory clientChallenge,
             uint256 clientChallengeOffset,
             uint256[2] memory rs,
-            uint256[2] memory q2p128 // precomputed of 2**128.publicKey
-        ) = _parseSigData(signatureData);
-
-        // check if the provided signed message is the same as the hash
-        if (hash != bytes32(clientChallenge)) {
-            revert("UserOp hash & challenge mismatch");
-            // return ERC1271_INVALID;
-        }
-
-        // check if the provided public key is known
-        uint256[2] storage publicKey = signers[sender][credId];
-
-        if (publicKey[0] == 0 && publicKey[1] == 0) {
-            revert("Unknown public key");
-        }
-
-        return
-            sclVerifier.verify(
-                authenticatorDataFlagMask,
-                authenticatorData,
-                clientData,
-                clientChallenge,
-                clientChallengeOffset,
-                rs,
-                publicKey,
-                q2p128
-            );
-    }
-
-    function _parseSigData(
-        bytes calldata signature
-    )
-        internal
-        pure
-        returns (
-            bytes32 credId,
-            bytes1 authenticatorDataFlagMask,
-            bytes memory authenticatorData,
-            bytes memory clientData,
-            bytes memory clientChallenge,
-            uint256 clientChallengeOffset,
-            uint256[2] memory rs,
             uint256[2] memory q2p128
-        )
-    {
-        return
-            abi.decode(
+        ) = abi.decode(
                 signature,
                 (
                     bytes32,
@@ -201,6 +173,17 @@ contract WebAuthn256r1Validator is IValidator {
                     uint256[2]
                 )
             );
+
+        return SignatureData({
+            credId: credId,
+            authenticatorDataFlagMask: authenticatorDataFlagMask,
+            authenticatorData: authenticatorData,
+            clientData: clientData,
+            clientChallenge: clientChallenge,
+            clientChallengeOffset: clientChallengeOffset,
+            rs: rs,
+            q2p128: q2p128
+        });
     }
 
     function _addSigner(bytes32 credId, uint256[2] memory publicKey) internal {

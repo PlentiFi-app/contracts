@@ -4,3 +4,4 @@ solady/=lib/solady/src/
 openzeppelin/=lib/openzeppelin-contracts/
 account-abstraction/=lib/account-abstraction-0.7.0/
 SCL/=lib/SCL/src/
+FCL/=lib/FreshCryptoLib/solidity/src/
