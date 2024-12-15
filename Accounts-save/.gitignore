@@ -12,3 +12,19 @@ docs/
 
 # Dotenv file
 .env
+
+lcov.info
+coverage/
+
+# node
+node_modules/
+
+# hardhat
+artifacts/
+cache_hardhat/
+typechain-types/
+broadcast/
+
+# zerodev orchestra
+log/
+.envrc

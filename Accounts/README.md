@@ -1,47 +1,66 @@
+## Foundry
 
-to deploy the accounts:
+**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
-Rename `.env.example` to `.env` and fill in the required fields.
+Foundry consists of:
 
-Then, install the dependencies:
-```bash
-yarn install
+-   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
+-   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
+-   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
+-   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+
+## Documentation
+
+https://book.getfoundry.sh/
+
+## Usage
+
+### Build
+
+```shell
+$ forge build
 ```
 
-Verify the computed addresses match the expected addresses:
-```bash
-npx hardhat run script/hardhat/preview_deployed_addresses.ts --network <your_evm_network>
+### Test
+
+```shell
+$ forge test
 ```
 
-Deploy the Implementation manager:
-```bash
-npx hardhat run script/hardhat/deployImplementationManagerDeterministic.ts --network <your_evm_network>
+### Format
+
+```shell
+$ forge fmt
 ```
 
-Deploy the Factory Staker:
-```bash
-# actually, this does not need to be deterministic
-npx hardhat run script/hardhat/deployFactoryStakerDeterministic.ts --network <your_evm_network>
+### Gas Snapshots
+
+```shell
+$ forge snapshot
 ```
 
-Deploy your Account Factory:
-```bash
-npx hardhat run script/hardhat/deployAccountFactoryDeterministic.ts --network <your_evm_network>
+### Anvil
+
+```shell
+$ anvil
 ```
 
-### If not already done:
+### Deploy
 
-Deploy Kernel:
-```bash
-npx hardhat run script/hardhat/deployKernel.ts --network <your_evm_network>
+```shell
+$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
 ```
 
-Deploy the ProxyUpgrader:
-```bash
-npx hardhat run script/hardhat/deployProxyUpgrader.ts --network <your_evm_network>
+### Cast
+
+```shell
+$ cast <subcommand>
 ```
 
-Then, you'll need to initialize the ImplementationManager and register the Account Factory in the Factory Staker:
-```bash
-npx hardhat run script/postDeployment.ts --network <your_evm_network>
+### Help
+
+```shell
+$ forge --help
+$ anvil --help
+$ cast --help
 ```
