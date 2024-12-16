@@ -15,6 +15,13 @@ import {PlentiFiFactoryStaker} from "../../src/factory/FactoryStaker.sol";
 import {ImplementationManager} from "../../src/deployers/ImplementationManager.sol";
 import {PlentiFiAccountFactory} from "../../src/factory/AccountFactory.sol";
 
+struct AccountFactoryParams {
+    address implManager;
+    bytes32 factory_id;
+    address firstOwner;
+    address backupOwner;
+}
+
 contract PrecomputeAddresses is Script {
     function setUp() public {}
 
@@ -69,12 +76,18 @@ contract PrecomputeAddresses is Script {
             .computeAddress(implManagerBytecode, implManagerSalt);
 
         // Canonical Account Factory
-        bytes32 factory_id = vm.envBytes32("FACTORY_ID");
-        require(factory_id != bytes32(0), "FACTORY_ID not set in env");
+        AccountFactoryParams memory accountFactoryParams = AccountFactoryParams(
+            implManagerPreComputedAddress,
+            vm.envBytes32("FACTORY_ID"),
+            vm.envAddress("FIRST_OWNER"),
+            vm.envAddress("BACKUP_OWNER")
+        );
 
         bytes memory accountFactoryConstructorArgs = abi.encode(
             implManagerPreComputedAddress,
-            factory_id
+            accountFactoryParams.factory_id,
+            accountFactoryParams.firstOwner,
+            accountFactoryParams.backupOwner
         );
         bytes memory accountFactoryBytecode = abi.encodePacked(
             type(PlentiFiAccountFactory).creationCode,

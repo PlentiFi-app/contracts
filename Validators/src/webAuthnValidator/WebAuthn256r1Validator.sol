@@ -174,16 +174,17 @@ contract WebAuthn256r1Validator is IValidator {
                 )
             );
 
-        return SignatureData({
-            credId: credId,
-            authenticatorDataFlagMask: authenticatorDataFlagMask,
-            authenticatorData: authenticatorData,
-            clientData: clientData,
-            clientChallenge: clientChallenge,
-            clientChallengeOffset: clientChallengeOffset,
-            rs: rs,
-            q2p128: q2p128
-        });
+        return
+            SignatureData({
+                credId: credId,
+                authenticatorDataFlagMask: authenticatorDataFlagMask,
+                authenticatorData: authenticatorData,
+                clientData: clientData,
+                clientChallenge: clientChallenge,
+                clientChallengeOffset: clientChallengeOffset,
+                rs: rs,
+                q2p128: q2p128
+            });
     }
 
     function _addSigner(bytes32 credId, uint256[2] memory publicKey) internal {

@@ -1,66 +1,61 @@
-## Foundry
+# Deployment Instructions
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+To deploy the accounts:
 
-Foundry consists of:
+1. Rename `.env.example` to `.env` and fill in the required fields.
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
-
-## Documentation
-
-https://book.getfoundry.sh/
-
-## Usage
-
-### Build
-
-```shell
-$ forge build
+2. Install Foundry if you haven't already:
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
 ```
 
-### Test
-
-```shell
-$ forge test
+3. Install dependencies:
+```bash
+forge install
 ```
 
-### Format
-
-```shell
-$ forge fmt
+4. Preview computed addresses:
+```bash
+forge script script/hardhat/preview_deployed_addresses.s.sol --rpc-url <your_rpc_url> --private-key <your_private_key>
 ```
 
-### Gas Snapshots
-
-```shell
-$ forge snapshot
+5. Deploy the Implementation Manager:
+```bash
+forge script script/hardhat/deployImplementationManagerDeterministic.s.sol --broadcast  --rpc-url <your_rpc_url>  --private-key <your_private_key>
 ```
 
-### Anvil
-
-```shell
-$ anvil
+6. Deploy the Factory Staker:
+```bash
+# Note: This doesn't need to be deterministic
+forge script script/hardhat/deployFactoryStakerDeterministic.s.sol --broadcast --rpc-url <your_rpc_url>  --private-key <your_private_key>
 ```
 
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+7. Deploy your Account Factory:
+```bash
+forge script script/hardhat/deployAccountFactoryDeterministic.s.sol --broadcast --rpc-url <your_rpc_url>  --private-key <your_private_key>
 ```
 
-### Cast
+### If not already done:
 
-```shell
-$ cast <subcommand>
+8. Deploy Kernel:
+```bash
+forge script script/hardhat/deployKernel.s.sol --broadcast --rpc-url <your_rpc_url>  --private-key <your_private_key>
 ```
 
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+9. Deploy the ProxyUpgrader:
+```bash
+forge script script/hardhat/deployProxyUpgrader.s.sol --broadcast --rpc-url <your_rpc_url>  --private-key <your_private_key>
 ```
+
+10. Initialize ImplementationManager and register Account Factory:
+```bash
+forge script script/postDeployment.s.sol --broadcast --rpc-url <your_rpc_url>  --private-key <your_private_key>
+```
+
+### Additional Options
+
+- To verify all transactions before broadcasting, add `--verify` to the forge commands
+- To see detailed gas usage, add `--gas-report`
+- For testnet deployments, add your private key: `--private-key <your_private_key>`
+- For production deployments, use a keystore file instead: `--keystore /path/to/keystore`

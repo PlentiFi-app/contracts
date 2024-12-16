@@ -18,36 +18,55 @@ contract DeployFactory is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
         /* -------------CONSTRUCTOR ARGUMENTS----------------- */
-        address implementationManager = vm.envAddress("EXPECTED_IMPLEMENTATION_MANAGER_ADDRESS");
+        address implementationManager = vm.envAddress(
+            "EXPECTED_IMPLEMENTATION_MANAGER_ADDRESS"
+        );
         bytes32 factory_id = vm.envBytes32("FACTORY_ID");
-        
-        require(implementationManager != address(0), "IMPLEMENTATION_ADDRESS not set in env");
-        require(factory_id != bytes32(0), "FACTORY_ID not set in env");
+
+        address firstOwner =  vm.envAddress("FIRST_OWNER");
+        address backupOwner = vm.envAddress("BACKUP_OWNER");
+
+        require(
+            implementationManager != address(0),
+            "IMPLEMENTATION_ADDRESS not set in env"
+        );
 
         /* -------------SETUP DETERMINISTIC FACTORY----------------- */
-        address deterministicFactoryAddress = vm.envAddress("DETERMINISTIC_FACTORY_ADDRESS");
-        require(deterministicFactoryAddress != address(0), "DETERMINISTIC_FACTORY_ADDRESS not set in env");
-        
-        IDeterministicContractDeployer deterministicFactory = IDeterministicContractDeployer(payable(deterministicFactoryAddress));
+        address deterministicFactoryAddress = vm.envAddress(
+            "DETERMINISTIC_FACTORY_ADDRESS"
+        );
+        require(
+            deterministicFactoryAddress != address(0),
+            "DETERMINISTIC_FACTORY_ADDRESS not set in env"
+        );
+
+        IDeterministicContractDeployer deterministicFactory = IDeterministicContractDeployer(
+                payable(deterministicFactoryAddress)
+            );
 
         /* -------------SETUP FACTORY FOR DEPLOYMENT----------------- */
         // Get the bytecode with constructor arguments
         bytes memory bytecode = abi.encodePacked(
             type(PlentiFiAccountFactory).creationCode,
-            abi.encode(implementationManager, factory_id)
+            abi.encode(implementationManager, factory_id, firstOwner, backupOwner)
         );
-        
+
         bytes32 salt = keccak256(bytecode);
 
         /* -------------ENSURE CANONICAL ADDRESS IS THE EXPECTED ONE----------------- */
         // if id == bytes32(0), then the factory is the canonical factory
         if (factory_id == bytes32(0)) {
-            address expectedAddress = vm.envAddress("EXPECTED_PLENTIFI_CANONICAL_FACTORY_ADDRESS");
-            address preComputedAddress = deterministicFactory.computeAddress(bytecode, salt);
-            
+            address expectedAddress = vm.envAddress(
+                "EXPECTED_PLENTIFI_CANONICAL_FACTORY_ADDRESS"
+            );
+            address preComputedAddress = deterministicFactory.computeAddress(
+                bytecode,
+                salt
+            );
+
             console2.log("expectedAddress:", expectedAddress);
             console2.log("preComputedAddress:", preComputedAddress);
-            
+
             require(
                 expectedAddress == preComputedAddress,
                 "Canonical Factory computed address does not match expected address"
@@ -59,11 +78,16 @@ contract DeployFactory is Script {
                 size := extcodesize(expectedAddress)
             }
             if (size > 0) {
-                console2.log("PlentiFiAccountFactory already deployed at:", expectedAddress);
+                console2.log(
+                    "PlentiFiAccountFactory already deployed at:",
+                    expectedAddress
+                );
                 return;
             }
         } else {
-            console2.log("factory_id != bytes32(1), Canonical Factory address check skipped, stop now if this is not expected");
+            console2.log(
+                "factory_id != bytes32(0), Canonical Factory address check skipped, stop now if this is not expected"
+            );
             // Sleep for 10 seconds to allow manual interruption
             vm.sleep(10);
         }
@@ -72,17 +96,13 @@ contract DeployFactory is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy the PlentiFiAccountFactory contract using deterministicFactory
-        address deployedAddress = address(0);
-        try deterministicFactory.deploy(bytecode, salt) returns (address addr) {
-            deployedAddress = addr;
-        } catch Error(string memory reason) {
-            console2.log("Deployment failed:", reason);
-            revert("Deployment failed");
-        }
+        address deployedAddress = address(
+            deterministicFactory.deploy(bytecode, salt)
+        );
 
         vm.stopBroadcast();
 
-        require(deployedAddress != address(0), "Deployment failed - address is zero");
         console2.log("PlentiFiAccountFactory deployed to:", deployedAddress);
     }
 }
+
