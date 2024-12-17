@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {FirstImplementation} from "./FirstImplementation.sol";
-import {IImplementationManager} from "./interfaces/IImplementationManager.sol";
 
 /**
  * @title ImplementationManager
@@ -13,7 +12,7 @@ import {IImplementationManager} from "./interfaces/IImplementationManager.sol";
  * It MUST never change
  * It MUST always have the same address on any evm compatible chain
  */
-contract ImplementationManager is Ownable, IImplementationManager {
+contract ImplementationManager is Ownable {
     string public constant versionId = "ImplementationManager-v0.0.1";
 
     uint256 constant MODULE_TYPE_VALIDATOR = 1;

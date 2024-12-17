@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.21;
 
-import {IFirstImplementation} from "./interfaces/IFirstImplementation.sol";
+import {FirstImplementation} from "./FirstImplementation.sol";
 
 /**
  * @title ProxyUpgrader
@@ -31,7 +31,7 @@ contract ProxyUpgrader {
         }
 
         try
-            IFirstImplementation(proxy).upgradeToAndCall(
+            FirstImplementation(payable(proxy)).upgradeToAndCall(
                 newImplementation,
                 initData
             )
@@ -40,5 +40,14 @@ contract ProxyUpgrader {
         } catch {
             revert UpgradeFailed();
         }
+
+        require(
+            IBasicAccount(proxy).rootValidator() != address(0),
+            "PlentiFiFactory: account deployed but not initialized"
+        );
     }
+}
+
+interface IBasicAccount {
+    function rootValidator() external view returns (address);
 }

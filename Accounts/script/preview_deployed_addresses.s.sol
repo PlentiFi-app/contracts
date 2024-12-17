@@ -10,10 +10,10 @@ Precompute the addresses of:
 
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
-import {IDeterministicContractDeployer} from "../../src/accounts/interfaces/IDeterministicContractDeployer.sol";
-import {PlentiFiFactoryStaker} from "../../src/factory/FactoryStaker.sol";
-import {ImplementationManager} from "../../src/deployers/ImplementationManager.sol";
-import {PlentiFiAccountFactory} from "../../src/factory/AccountFactory.sol";
+import {IDeterministicContractDeployer} from "../src/accounts/interfaces/IDeterministicContractDeployer.sol";
+import {PlentiFiFactoryStaker} from "../src/factory/FactoryStaker.sol";
+import {ImplementationManager} from "../src/deployers/ImplementationManager.sol";
+import {PlentiFiAccountFactory} from "../src/factory/AccountFactory.sol";
 
 struct AccountFactoryParams {
     address implManager;
@@ -87,7 +87,8 @@ contract PrecomputeAddresses is Script {
             implManagerPreComputedAddress,
             accountFactoryParams.factory_id,
             accountFactoryParams.firstOwner,
-            accountFactoryParams.backupOwner
+            accountFactoryParams.backupOwner,
+            new address[](0)
         );
         bytes memory accountFactoryBytecode = abi.encodePacked(
             type(PlentiFiAccountFactory).creationCode,

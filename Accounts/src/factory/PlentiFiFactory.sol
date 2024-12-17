@@ -4,12 +4,12 @@ pragma solidity ^0.8.28;
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {FirstImplementation} from "../deployers/FirstImplementation.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
-import {IImplementationManager} from "../deployers/interfaces/IImplementationManager.sol";
+import {ImplementationManager} from "../deployers/ImplementationManager.sol";
 import {ProxyUpgrader} from "../deployers/ProxyUpgrader.sol";
 
 abstract contract PlentiFiFactory {
     FirstImplementation public immutable firstImplementation;
-    IImplementationManager public immutable implementationManager;
+    ImplementationManager public immutable implementationManager;
     // the custom identifier for special purpose factories
     bytes32 public immutable ID;
 
@@ -22,34 +22,22 @@ abstract contract PlentiFiFactory {
         if (implementationManager_ == address(0)) revert ZeroAddress();
 
         firstImplementation = new FirstImplementation();
-        implementationManager = IImplementationManager(implementationManager_);
+        implementationManager = ImplementationManager(implementationManager_);
         ID = id_;
     }
 
     /**
      * @notice Creates a new account with specified initialization data
-     * @param data Initialization data for the account
+     * @param initData Initialization data for the account
      * @param salt Unique salt for address generation
-     * @return address The address of the deployed or existing account
+     * @return address The address of the deployed account
      *
      * @dev The deployed account address only depends on the salt and the factory address
      */
     function _createAccount(
-        bytes calldata data,
+        bytes calldata initData,
         bytes32 salt
     ) internal returns (address) {
-        address addr = getAddress(salt);
-
-        uint32 size;
-        assembly {
-            size := extcodesize(addr)
-        }
-
-        // If there's already a contract, return its address
-        if (size > 0) {
-            return addr;
-        }
-
         try
             new ERC1967Proxy{salt: salt, value: msg.value}(
                 address(firstImplementation),
@@ -63,7 +51,7 @@ abstract contract PlentiFiFactory {
             ProxyUpgrader(implementationManager.proxyUpgrader()).upgrade(
                 proxyAddress,
                 newImplementation,
-                data
+                initData
             );
 
             emit AccountDeployed(proxyAddress, salt);

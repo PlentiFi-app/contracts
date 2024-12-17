@@ -9,14 +9,16 @@ import {IEntryPoint} from "./interfaces/IEntryPoint.sol";
 import {ModuleManager} from "./core/ModuleManager.sol";
 import {BaseAccount} from "./core/BaseAccount.sol";
 import {IValidator, IHook} from "./interfaces/IModules.sol";
-import {SIG_VALIDATION_FAILED_UINT, ERC1271_MAGICVALUE, MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK} from "./core/constants.sol";
+import {SIG_VALIDATION_FAILED_UINT, ERC1271_MAGICVALUE, MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK, ERC1967_IMPLEMENTATION_SLOT} from "./core/constants.sol";
 
 contract PlentiFiAccount is
     BaseAccount,
-    UUPSUpgradeable,
     ModuleManager,
-    TokenCallbackHandler
+    TokenCallbackHandler,
+    UUPSUpgradeable
 {
+    string public constant versionId = "PlentiFiAccount-v0.0.1";
+
     IEntryPoint public immutable ENTRY_POINT; // entryPointV0.7 expected
 
     error ZeroAddress();
@@ -265,7 +267,7 @@ contract PlentiFiAccount is
         // each elem is: 1 byte moduleType + 20 bytes moduleAddress + 1 byte module type
         // + module specific data
         bytes[] calldata initConfig
-    ) public {
+    ) external {
         if (rootValidator != IValidator(address(0))) {
             revert("account: already initialized");
         }
@@ -312,15 +314,6 @@ contract PlentiFiAccount is
         }
     }
 
-    /**
-     * @inheritdoc UUPSUpgradeable
-     */
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal pure override {
-        if (newImplementation == address(0)) revert ZeroAddress();
-    }
-
     /* ----------------------DEFAULT FUNCTIONS---------------------- */
     receive() external payable {
         emit Received(msg.sender, msg.value);
@@ -335,5 +328,41 @@ contract PlentiFiAccount is
 
         // todo: we could use this space to execute some stuff
         _executePostHooks(contexts);
+    }
+
+    /* ----------------------ERC1967 AND UUPS---------------------- */
+
+    function upgradeTo(
+        address _newImplementation
+    ) external payable onlyEntryPointOrSelfOrRoot {
+        require(
+            _newImplementation != address(0),
+            "account: new implementation is the zero address"
+        );
+        assembly {
+            sstore(ERC1967_IMPLEMENTATION_SLOT, _newImplementation)
+        }
+        emit Upgraded(_newImplementation);
+    }
+
+    /**
+     * @dev function from UUPSUpgradeable that we don't want to expose
+     * since it would allow anyone to upgrade the account.
+     * @notice To upgrade the account, use the `upgradeTo` function
+     */
+    function upgradeToAndCall(
+        address,
+        bytes memory
+    ) public payable override onlyEntryPointOrSelfOrRoot {
+        revert("account: upgradeToAndCall not allowed");
+    }
+
+    /**
+     * @inheritdoc UUPSUpgradeable
+     */
+    function _authorizeUpgrade(
+        address newImplementation /* pure */
+    ) internal pure override {
+        if (newImplementation == address(0)) revert ZeroAddress();
     }
 }

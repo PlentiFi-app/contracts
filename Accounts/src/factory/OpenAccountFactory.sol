@@ -21,23 +21,34 @@ contract PlentiFiOpenAccountFactory is PlentiFiFactory {
     constructor(
         address implementationManager_,
         bytes32 id_
-    ) PlentiFiFactory(implementationManager_, id_) {
-    }
+    ) PlentiFiFactory(implementationManager_, id_) {}
 
     /**
      * @notice Creates a new account with specified initialization data
      * @notice Only the salt influences the address of the deployed account
      * @notice If the account already exists, the function will return the existing account address
-     * 
+     *
      * @param data - Initialization data for the account
      * @param salt - Unique salt for address generation
-     * 
+     *
      * @return address - The address of the deployed or existing account
      */
     function createAccount(
         bytes calldata data,
         bytes32 salt
     ) external payable returns (address) {
+        address addr = getAddress(salt);
+
+        uint32 size;
+        assembly {
+            size := extcodesize(addr)
+        }
+
+        // If there's already a contract, return its address
+        if (size > 0) {
+            return addr;
+        }
+
         return _createAccount(data, salt);
     }
 }

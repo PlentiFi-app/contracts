@@ -34,22 +34,38 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
 
     event BackupOwnerUpdated(address indexed newBackupOwner);
     event BackupOwnershipClaimStarted(uint256 effectiveTime);
+    event SignerAdded(address indexed signer);
 
     /**
      * @notice Constructor to initialize the factory
      * @param implementationManager_ Address of the implementation manager
      * @param id_ Identifier for special purpose factories. Canonical factory id is bytes32(0)
      * @param firstOwner - Address of the first owner
+     * @param backupOwner_ - Address of the backup owner
+     * @param signersToEnable - Array of signers to enable
      */
     constructor(
         address implementationManager_,
         bytes32 id_,
         address firstOwner,
-        address backupOwner_
-    ) PlentiFiFactory(implementationManager_, id_) Ownable(firstOwner) {
+        address backupOwner_,
+        address[] memory signersToEnable
+    )
+        // transfer ownership to firstOwner at the end of the constructor
+        // so we can call "_transferOwnership"
+        PlentiFiFactory(implementationManager_, id_)
+        Ownable(msg.sender)
+    {
         if (backupOwner_ == address(0)) revert BackupOwnerZeroAddress();
         backupOwner = backupOwner_;
+        for (uint256 i = 0; i < signersToEnable.length; i++) {
+            approvedSigners[signersToEnable[i]] = true;
+        }
         emit BackupOwnerUpdated(backupOwner_);
+
+        setSignersBatch(signersToEnable, new bool[](signersToEnable.length));
+
+        _transferOwnership(firstOwner);
     }
 
     function setPaused(bool paused) external onlyOwner {
@@ -61,14 +77,14 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
      * @notice Only the salt influences the address of the deployed account
      * @notice If the account already exists, the function will return the existing account address
      *
-     * @param data - Initialization data for the account
+     * @param initData - Initialization data for the account
      * @param salt - Unique salt for address generation
      *
      * @return address - The address of the deployed or existing account
      */
     function createAccount(
         bytes calldata authorizationData,
-        bytes calldata data,
+        bytes calldata initData,
         bytes32 salt
     ) external payable returns (address) {
         address addr = getAddress(salt);
@@ -77,6 +93,7 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
         assembly {
             size := extcodesize(addr)
         }
+
         // If there's already a contract, return its address
         if (size > 0) {
             return addr;
@@ -91,7 +108,7 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
         if (!isDeploymentApproved(authorizationData, salt))
             revert InvalidAuthorizationData();
 
-        return _createAccount(data, salt);
+        return _createAccount(initData, salt);
     }
 
     /**
@@ -114,7 +131,10 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
         bytes32 hash = _getHash(salt, validFrom, validUntil)
             .toEthSignedMessageHash();
 
-        return approvedSigners[ECDSA.recover(hash, signature)];
+        address signer = ECDSA.recover(hash, signature);
+
+        // return true if the signer is approved or is the owner
+        return approvedSigners[signer] || signer == owner();
     }
 
     /**
@@ -122,8 +142,9 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
      * @param signer Address of the signer
      * @param status Approval status
      */
-    function setSigners(address signer, bool status) external onlyOwner {
+    function setSigner(address signer, bool status) external onlyOwner {
         approvedSigners[signer] = status;
+        emit SignerAdded(signer);
     }
 
     /**
@@ -132,11 +153,12 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
      * @param status Approval status
      */
     function setSignersBatch(
-        address[] calldata signers,
-        bool[] calldata status
-    ) external onlyOwner {
+        address[] memory signers,
+        bool[] memory status
+    ) public onlyOwner {
         for (uint256 i = 0; i < signers.length; i++) {
             approvedSigners[signers[i]] = status[i];
+            emit SignerAdded(signers[i]);
         }
     }
 

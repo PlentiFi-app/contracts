@@ -48,7 +48,7 @@ contract DeployFactory is Script {
         // Get the bytecode with constructor arguments
         bytes memory bytecode = abi.encodePacked(
             type(PlentiFiAccountFactory).creationCode,
-            abi.encode(implementationManager, factory_id, firstOwner, backupOwner)
+            abi.encode(implementationManager, factory_id, firstOwner, backupOwner, new address[](0))
         );
 
         bytes32 salt = keccak256(bytecode);
