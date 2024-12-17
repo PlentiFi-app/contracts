@@ -14,7 +14,6 @@ contract FirstImplementation is UUPSUpgradeable {
     error ZeroAddressImplementation();
     error InitializeError();
     
-  uint256 test = 12; 
     string public constant versionId = "FirstImplementation-v0.0.1";
   
 
