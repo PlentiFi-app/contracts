@@ -13,7 +13,7 @@ import "../accounts/interfaces/IEntryPoint.sol";
  */
 contract PlentiFiFactoryStaker is Ownable {
     /// @notice Version identifier for the contract
-    string public constant versionId = "PlentiFi-StakerFactory-v0.0.1";
+    string public constant versionId = "PlentiFi-StakerFactory-v0.0.2";
 
     mapping(address => bool) public approved;
 

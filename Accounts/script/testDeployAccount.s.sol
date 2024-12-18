@@ -21,87 +21,46 @@ contract TestAccountDeployment is Script {
 
     function setUp() public {}
 
-    // /**
-    //  * @notice Generates the authorization signature for account deployment
-    //  * @param validFrom The timestamp from which the signature is valid
-    //  * @param validUntil The timestamp until which the signature is valid
-    //  * @return The combined signature bytes (r + s + v)
-    //  */
-    // function generateSignature(
-    //     uint48 validFrom,
-    //     uint48 validUntil
-    // ) internal view returns (bytes memory) {
-    //     // Create message hash according to EIP-191
-    //     bytes32 ethSignedHash = keccak256(
-    //         abi.encodePacked(
-    //             vm.envBytes32("FACTORY_ID"), // todo: get it from the factory itself
-    //             vm.envBytes32("SALT"),
-    //             validFrom,
-    //             validUntil,
-    //             uint256(17000) // chain ID (Ethereum holesky)
-    //         )
-    //     ).toEthSignedMessageHash();
-
-    //     // Sign the message hash with the owner's private key
-    //     (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-    //         uint256(vm.envBytes32("FIRST_OWNER_PRIVATE_KEY")),
-    //         ethSignedHash
-    //     );
-
-    //     // Combine signature components
-    //     return abi.encodePacked(r, s, v);
-    // }
     /**
- * @notice Generates the authorization signature for account deployment
- * @param validFrom The timestamp from which the signature is valid
- * @param validUntil The timestamp until which the signature is valid
- * @return The combined signature bytes (r + s + v)
- */
-function generateSignature(
-    uint48 validFrom,
-    uint48 validUntil
-) internal view returns (bytes memory) {
-    // First create the message hash without the Ethereum Signed Message prefix
-    bytes32 messageHash = keccak256(
-        abi.encodePacked(
-            vm.envBytes32("FACTORY_ID"),
-            vm.envBytes32("SALT"),
-            validFrom,
-            validUntil,
-            uint256(17000) // chain ID (Ethereum holesky)
-        )
-    );
-    
-    // Then create the Ethereum Signed Message hash
-    bytes32 ethSignedHash = messageHash.toEthSignedMessageHash();
+     * @notice Generates the authorization signature for account deployment
+     * @return The combined signature bytes (r + s + v)
+     */
+    function generateSignature() internal view returns (bytes memory) {
+        // First create the message hash without the Ethereum Signed Message prefix
+        bytes32 messageHash = keccak256(
+            abi.encode(
+                vm.envBytes32("FACTORY_ID"),
+                vm.envAddress("EXPECTED_PLENTIFI_CANONICAL_FACTORY_ADDRESS"),
+                vm.envBytes32("SALT"),
+                uint256(17000) // chain ID (Ethereum holesky)
+            )
+        );
 
-    // Sign the Ethereum Signed Message hash
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-        uint256(vm.envBytes32("FIRST_OWNER_PRIVATE_KEY")),
-        ethSignedHash
-    );
+        // Then create the Ethereum Signed Message hash
+        bytes32 ethSignedHash = messageHash.toEthSignedMessageHash();
 
-    // Return the signature in r+s+v format
-    return abi.encodePacked(r, s, v);
-}
+        // Sign the Ethereum Signed Message hash
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            uint256(vm.envBytes32("FIRST_OWNER_PRIVATE_KEY")),
+            ethSignedHash
+        );
+
+        // Return the signature in r+s+v format
+        return abi.encodePacked(r, s, v);
+    }
 
     /**
      * @notice Prepares the authorization and initialization data for account deployment
-     * @return authorizationData The encoded authorization data including signature and validity period
+     * @return signature The encoded authorization data including signature and validity period
      * @return createData The encoded initialization data for the new account
      */
     function prepareDeploymentData()
         internal
         view
-        returns (bytes memory authorizationData, bytes memory createData)
+        returns (bytes memory signature, bytes memory createData)
     {
-        // Set validity period
-        uint48 validFrom = 0;
-        uint48 validUntil = 1934373395;
-
         // Generate and encode authorization data
-        bytes memory signature = generateSignature(validFrom, validUntil);
-        authorizationData = abi.encode(signature, validFrom, validUntil);
+        signature = generateSignature();
 
         // Prepare initialization data
         bytes memory rootValidatorAndData = vm.envBytes(
@@ -115,8 +74,6 @@ function generateSignature(
             rootValidatorAndData,
             initConfig
         );
-
-        console2.log("createData length:", createData.length);
     }
 
     /**
@@ -187,10 +144,6 @@ function generateSignature(
             return;
         }
         console2.log("FactoryStaker is approved");
-
-        address factoryOwner = factoryStaker.owner();
-
-        console2.log("Factory Owner:", factoryOwner);
 
         factoryStaker.deployWithFactory(
             PlentiFiAccountFactory(accountFactoryAddress),

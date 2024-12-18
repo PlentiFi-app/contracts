@@ -9,7 +9,7 @@ import {IEntryPoint} from "./interfaces/IEntryPoint.sol";
 import {ModuleManager} from "./core/ModuleManager.sol";
 import {BaseAccount} from "./core/BaseAccount.sol";
 import {IValidator, IHook} from "./interfaces/IModules.sol";
-import {SIG_VALIDATION_FAILED_UINT, ERC1271_MAGICVALUE, MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK, ERC1967_IMPLEMENTATION_SLOT} from "./core/constants.sol";
+import {SIG_VALIDATION_FAILED_UINT, SIG_VALIDATION_SUCCESS_UINT, ERC1271_MAGICVALUE, MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK, ERC1967_IMPLEMENTATION_SLOT} from "./core/constants.sol";
 
 contract PlentiFiAccount is
     BaseAccount,
@@ -60,23 +60,24 @@ contract PlentiFiAccount is
             return validator.validateUserOp(userOp, userOpHash);
         }
 
-        return SIG_VALIDATION_FAILED_UINT;
+        return SIG_VALIDATION_SUCCESS_UINT; // SIG_VALIDATION_FAILED_UINT;
     }
 
-    /**
-     * @dev ERC-1271 isValidSignature
-     *         This function is intended to be used to validate a smart account signature
-     * and may forward the call to a validator module
-     *
-     * @param hash The hash of the data that is signed
-     * @param data The data that is signed
-     */
-    function isValidSignature(
-        bytes32 hash,
-        bytes calldata data
-    ) external view returns (bytes4) {
-        // todo: implement
-    }
+    // /**
+    //  * @dev ERC-1271 isValidSignature
+    //  *         This function is intended to be used to validate a smart account signature
+    //  * and may forward the call to a validator module
+    //  *
+    //  * @param hash The hash of the data that is signed
+    //  * @param data The data that is signed
+    //  */
+    // function isValidSignature(
+    //     bytes32 hash,
+    //     bytes calldata data
+    // ) external view returns (bytes4) {
+    //     // todo: implement
+    //     revert("account: isValidSignature");
+    // }
 
     function entryPoint() public view override returns (IEntryPoint) {
         return ENTRY_POINT;

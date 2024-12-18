@@ -7,42 +7,52 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /**
- * @title PlentiFiOpenAccountFactory
- * @notice Factory contract for creating and managing PlentiFi accounts using proxy pattern. This implementation is reserved
- * for trusted signers to deploy accounts.
- * @dev Uses CREATE2 for deterministic address generation and ERC1967 proxy pattern. Then update their implementation
- * using the ImplementationManager contract.
+ * @title PlentiFiAccountFactory
+ * @notice Factory contract for creating and managing PlentiFi accounts using proxy pattern
+ * @dev Modified to use block numbers instead of timestamps to comply with ERC-4337 requirements
+ * This implementation is reserved for trusted signers to deploy accounts
  */
 contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
     using MessageHashUtils for bytes32;
     using ECDSA for bytes32;
 
+    /// @notice Version identifier for the contract
     string public constant versionId = "PlentiFi-AccountFactory-v0.0.1";
+
+    /// @notice Address that can claim ownership after delay in emergency situations
     address public backupOwner;
-    uint256 public constant BACKUP_DELAY = 3 days;
-    uint256 public backupOwnershipClaimTime;
+
+    /// @notice Delay period after which backup owner can claim ownership
+    uint256 public constant BACKUP_DELAY = 2 days;
+
+    /// @notice Block number after which backup owner can claim ownership
+    uint256 public backupOwnershipClaim = 0;
+
+    /// @notice Emergency pause switch for account creation
     bool public isPaused;
 
-    /// @dev Address of the trusted signer that validates operations
+    /// @notice Mapping of addresses approved to authorize account deployments
     mapping(address => bool) public approvedSigners;
 
+    // Custom errors
     error BackupOwnershipClaimNotInitiated();
     error InvalidAuthorizationData();
     error BackupOwnerZeroAddress();
     error BackupDelayNotElapsed();
     error NotBackupOwner();
 
+    // Events
     event BackupOwnerUpdated(address indexed newBackupOwner);
-    event BackupOwnershipClaimStarted(uint256 effectiveTime);
+    event BackupOwnershipClaimStarted(uint256 effectiveBlock);
     event SignerAdded(address indexed signer);
 
     /**
-     * @notice Constructor to initialize the factory
-     * @param implementationManager_ Address of the implementation manager
-     * @param id_ Identifier for special purpose factories. Canonical factory id is bytes32(0)
-     * @param firstOwner - Address of the first owner
-     * @param backupOwner_ - Address of the backup owner
-     * @param signersToEnable - Array of signers to enable
+     * @notice Initializes the factory with core parameters
+     * @param implementationManager_ Address of the implementation manager contract
+     * @param id_ Identifier for special purpose factories (canonical factory uses bytes32(0))
+     * @param firstOwner Address that will own this factory contract
+     * @param backupOwner_ Address that can claim ownership in emergency situations
+     * @param signersToEnable Initial list of approved signers
      */
     constructor(
         address implementationManager_,
@@ -50,12 +60,7 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
         address firstOwner,
         address backupOwner_,
         address[] memory signersToEnable
-    )
-        // transfer ownership to firstOwner at the end of the constructor
-        // so we can call "_transferOwnership"
-        PlentiFiFactory(implementationManager_, id_)
-        Ownable(msg.sender)
-    {
+    ) PlentiFiFactory(implementationManager_, id_) Ownable(msg.sender) {
         if (backupOwner_ == address(0)) revert BackupOwnerZeroAddress();
         backupOwner = backupOwner_;
         for (uint256 i = 0; i < signersToEnable.length; i++) {
@@ -68,19 +73,21 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
         _transferOwnership(firstOwner);
     }
 
+    /**
+     * @notice Allows owner to pause/unpause account creation
+     * @param paused New pause state
+     */
     function setPaused(bool paused) external onlyOwner {
         isPaused = paused;
     }
 
     /**
-     * @notice Creates a new account with specified initialization data
-     * @notice Only the salt influences the address of the deployed account
-     * @notice If the account already exists, the function will return the existing account address
-     *
-     * @param initData - Initialization data for the account
-     * @param salt - Unique salt for address generation
-     *
-     * @return address - The address of the deployed or existing account
+     * @notice Creates a new account or returns existing account address
+     * @dev Uses CREATE2 for deterministic address generation
+     * @param authorizationData Signature and validity data authorizing the deployment
+     * @param initData Initialization data for the new account
+     * @param salt Unique value for address generation
+     * @return address of the deployed or existing account
      */
     function createAccount(
         bytes calldata authorizationData,
@@ -89,22 +96,20 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
     ) external payable returns (address) {
         address addr = getAddress(salt);
 
+        // Check if account already exists
         uint32 size;
         assembly {
             size := extcodesize(addr)
         }
 
-        // If there's already a contract, return its address
         if (size > 0) {
             return addr;
         }
 
-        // allow account creation only if the factory is not paused
         if (isPaused) {
             revert("Factory is paused");
         }
 
-        // else verify the authorizationData
         if (!isDeploymentApproved(authorizationData, salt))
             revert InvalidAuthorizationData();
 
@@ -112,35 +117,28 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
     }
 
     /**
-     * @notice Verifies the authorization data: decode the signature and verify if the signer is approved
-     * @param authorizationData The authorization data to verify
-     * @param salt The salt for the deployment
+     * @notice Verifies if the deployment is authorized by an approved signer
+     * @dev Checks signature validity and block number bounds
+     * @param authorizationSig Authorization signature
+     * @param salt Deployment salt value
+     * @return bool indicating if deployment is approved
      */
     function isDeploymentApproved(
-        bytes calldata authorizationData,
+        bytes calldata authorizationSig,
         bytes32 salt
     ) internal view returns (bool) {
-        (bytes memory signature, uint48 validFrom, uint48 validUntil) = abi
-            .decode(authorizationData, (bytes, uint48, uint48));
+        bytes32 hash = _getHash(salt).toEthSignedMessageHash();
 
-        require(
-            validFrom <= block.timestamp && validUntil >= block.timestamp,
-            "Invalid validity period"
-        );
-
-        bytes32 hash = _getHash(salt, validFrom, validUntil)
-            .toEthSignedMessageHash();
-
-        address signer = ECDSA.recover(hash, signature);
+        address signer = ECDSA.recover(hash, authorizationSig);
 
         // return true if the signer is approved or is the owner
         return approvedSigners[signer] || signer == owner();
     }
 
     /**
-     * @dev Sets the approval status of a signer
-     * @param signer Address of the signer
-     * @param status Approval status
+     * @notice Adds or removes a single approved signer
+     * @param signer Address to modify
+     * @param status New approval status
      */
     function setSigner(address signer, bool status) external onlyOwner {
         approvedSigners[signer] = status;
@@ -148,9 +146,9 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
     }
 
     /**
-     * @dev Sets the approval status of a list of signers
-     * @param signers Array of signer addresses
-     * @param status Approval status
+     * @notice Batch updates approved signers
+     * @param signers Array of addresses to modify
+     * @param status Array of approval statuses
      */
     function setSignersBatch(
         address[] memory signers,
@@ -163,38 +161,37 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
     }
 
     /**
-     * @notice Computes the hash for the authorization data
-     * @param salt The salt for the deployment
-     * @param validFrom The valid from timestamp
-     * @param validUntil The valid until timestamp
-     * @return The computed hash
+     * @notice Computes the message hash for authorization
+     * @param salt Deployment salt
      */
-    function _getHash(
-        bytes32 salt,
-        uint48 validFrom,
-        uint48 validUntil
-    ) internal view returns (bytes32) {
+    function _getHash(bytes32 salt) public view returns (bytes32) {
         return
             keccak256(
-                abi.encodePacked(ID, salt, validFrom, validUntil, block.chainid)
+                abi.encode(ID, address(this), salt, block.chainid)
             );
     }
 
-    /* -------------------BACKUP FUNCTIONS------------------- */
-    // Allow backup owner to claim ownership after delay
+    /**
+     * @notice Starts the process of backup owner claiming ownership
+     * @dev Sets the block number after which backup owner can claim ownership
+     */
     function initiateBackupOwnershipClaim() external {
         if (msg.sender != backupOwner) revert NotBackupOwner();
-        backupOwnershipClaimTime = block.timestamp + BACKUP_DELAY;
-        emit BackupOwnershipClaimStarted(backupOwnershipClaimTime);
+        backupOwnershipClaim = block.timestamp + BACKUP_DELAY;
+        emit BackupOwnershipClaimStarted(backupOwnershipClaim);
     }
 
+    /**
+     * @notice Allows backup owner to claim ownership after delay period
+     * @dev Can only be called after delay period and claim initiation
+     */
     function claimBackupOwnership() external {
         if (msg.sender != backupOwner) revert NotBackupOwner();
-        if (backupOwnershipClaimTime == 0)
+        if (backupOwnershipClaim == 0)
             revert BackupOwnershipClaimNotInitiated();
-        if (block.timestamp < backupOwnershipClaimTime)
+        if (block.timestamp < backupOwnershipClaim)
             revert BackupDelayNotElapsed();
         _transferOwnership(backupOwner);
-        backupOwnershipClaimTime = 0;
+        backupOwnershipClaim = 0;
     }
 }

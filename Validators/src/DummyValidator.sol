@@ -47,7 +47,6 @@ contract DummyValidator is IValidator {
         bytes32,
         bytes calldata data
     ) external pure returns (bytes4) {
-
         // emit DataEvent("isValidSignatureWithSender", data);
 
         // bytes memory validSignature = new bytes(1);
@@ -65,14 +64,14 @@ contract DummyValidator is IValidator {
      * @inheritdoc IModule
      */
     function onInstall(bytes calldata data) external payable override {
-        emit DataEvent(88888,  data);
+        emit DataEvent(88888, data);
 
         // bytes memory validData = new bytes(1);
 
         // validData[0] = 0x56;
 
         // if (compareBytes(validData, data)) {
-            initialized[msg.sender] = true;
+        initialized[msg.sender] = true;
         // }
 
         // revert("Dummy validator: Invalid install data");
@@ -89,7 +88,7 @@ contract DummyValidator is IValidator {
         // validData[0] = 0x78;
 
         // if (compareBytes(validData, data)) {
-            delete initialized[msg.sender];
+        delete initialized[msg.sender];
         // }
 
         // revert("Dummy validator: Invalid uninstall data");
