@@ -58,21 +58,16 @@ contract PlentiFiAccount is
             address(bytes20(userOp.signature[:20]))
         );
 
-        if (validators[validator]) {
+        if (validators[validator] || address(validator) == address(rootValidator)) {
             return validator.validateUserOp(userOp, userOpHash);
         }
 
         return SIG_VALIDATION_FAILED_UINT;
     }
 
-    /* ----------------------ERC1271---------------------- */
+    /* ----------------------ERC1271 RELATED---------------------- */
     /**
-     * @dev ERC-1271 isValidSignature
-     *         This function is intended to be used to validate a smart account signature
-     * and may forward the call to a validator module
-     *
-     * @param hash The hash of the data that is signed
-     * @param data The data that is signed
+     * @inheritdoc IERC1271
      */
     function isValidSignature(
         bytes32 hash,
@@ -82,6 +77,7 @@ contract PlentiFiAccount is
         revert("account: isValidSignature");
     }
 
+    // required for erc7579
     function isValidSignatureWithSender(
         address sender,
         bytes32 hash,
@@ -241,7 +237,7 @@ contract PlentiFiAccount is
         }
     }
 
-    /* ----------------------UUPS PROXY FUNCTIONS---------------------- */
+    /* ----------------------UUPS & PROXY FUNCTIONS---------------------- */
 
     /**
      * @dev Initialize the account with the root validator and the initial configuration

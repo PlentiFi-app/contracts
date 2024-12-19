@@ -66,12 +66,18 @@ contract TestAccountDeployment is Script {
         bytes memory rootValidatorAndData = vm.envBytes(
             "DUMMY_VALIDATOR_ADDRESS"
         );
+
+        // optional hook and its data
+        bytes memory hookAndData = bytes("0x");
+
+        // other modules and their data
         bytes[] memory initConfig = new bytes[](0);
 
         // Encode initialization call
         createData = abi.encodeWithSignature(
             "initialize(bytes,bytes[])",
             rootValidatorAndData,
+            hookAndData,
             initConfig
         );
     }
