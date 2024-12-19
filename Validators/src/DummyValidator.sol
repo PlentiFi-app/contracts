@@ -45,7 +45,7 @@ contract DummyValidator is IValidator {
     function isValidSignatureWithSender(
         address,
         bytes32,
-        bytes calldata data
+        bytes calldata /* data */
     ) external pure returns (bytes4) {
         // emit DataEvent("isValidSignatureWithSender", data);
 

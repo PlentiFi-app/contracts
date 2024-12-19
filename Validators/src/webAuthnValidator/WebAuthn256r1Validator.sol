@@ -117,7 +117,7 @@ contract WebAuthn256r1Validator is IValidator {
         bytes32 hash,
         bytes calldata signatureData
     ) internal view returns (uint256) {
-        bool dryRun = signatureData[0] == 0x01;
+        bool dryRun = signatureData[0] != 0x00;
 
         // Parse signature data into struct to avoid stack too deep
         SignatureData memory sigData = _parseSigData(signatureData);
