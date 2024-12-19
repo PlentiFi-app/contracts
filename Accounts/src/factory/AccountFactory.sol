@@ -25,7 +25,7 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
     /// @notice Delay period after which backup owner can claim ownership
     uint256 public constant BACKUP_DELAY = 2 days;
 
-    /// @notice Block number after which backup owner can claim ownership
+    /// @notice Timestamp initiating the backup ownership claim process
     uint256 public backupOwnershipClaim = 0;
 
     /// @notice Emergency pause switch for account creation
@@ -154,7 +154,8 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
         address[] memory signers,
         bool[] memory status
     ) public onlyOwner {
-        for (uint256 i = 0; i < signers.length; i++) {
+        uint256 len = signers.length;
+        for (uint256 i = 0; i < len; i++) {
             approvedSigners[signers[i]] = status[i];
             emit SignerAdded(signers[i]);
         }

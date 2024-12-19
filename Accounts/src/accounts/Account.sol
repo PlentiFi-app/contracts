@@ -3,6 +3,7 @@
 pragma solidity ^0.8.27;
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {PackedUserOperation} from "./interfaces/PackedUserOperation.sol";
 import {TokenCallbackHandler} from "./core/TokenCallbackHandler.sol";
 import {IEntryPoint} from "./interfaces/IEntryPoint.sol";
@@ -15,6 +16,7 @@ contract PlentiFiAccount is
     BaseAccount,
     ModuleManager,
     TokenCallbackHandler,
+    IERC1271,
     UUPSUpgradeable
 {
     string public constant versionId = "PlentiFiAccount-v0.0.1";
@@ -63,6 +65,7 @@ contract PlentiFiAccount is
         return SIG_VALIDATION_FAILED_UINT;
     }
 
+    /* ----------------------ERC1271---------------------- */
     /**
      * @dev ERC-1271 isValidSignature
      *         This function is intended to be used to validate a smart account signature
@@ -74,9 +77,18 @@ contract PlentiFiAccount is
     function isValidSignature(
         bytes32 hash,
         bytes calldata data
-    ) external view returns (bytes4) {
+    ) external pure returns (bytes4) {
         // todo: implement
         revert("account: isValidSignature");
+    }
+
+    function isValidSignatureWithSender(
+        address sender,
+        bytes32 hash,
+        bytes memory signature
+    ) public pure returns (bool) {
+        // todo: implement
+        revert("account: isValidSignatureWithSender");
     }
 
     function entryPoint() public view override returns (IEntryPoint) {
@@ -155,61 +167,45 @@ contract PlentiFiAccount is
 
     /* ----------------------HOOKS---------------------- */
     /**
-     * @dev Install a hook
+     * @notice Install a hook
+     * @dev If the uninstall data is empty, the hook is uninstalled without being called
+     * (event if it usually needs to). This protects against bricked hooks.
      * @param hook The address of the hook
-     * @param flags The status of the hook (
-     * @param data The data to initialize / remove the hook
+     * @param uninstallData The data to uninstall the actual hook
+     * @param initData The data to initialize the new hook
      */
     function updateHook(
         IHook hook,
-        uint8 flags,
-        bytes calldata data
-    ) public onlyEntryPointOrSelfOrRoot {
-        if (address(hook) == address(0)) {
-            revert ZeroAddress();
+        bytes calldata uninstallData,
+        bytes calldata initData
+    ) external onlyEntryPointOrSelfOrRoot {
+        if (uninstallData.length > 0) {
+            hook.onUninstall(uninstallData);
         }
 
-        if (flags != 0) {
-            // install or update the hook capabilities
-            hook.onInstall(data);
-            hooks[hook] = flags;
-            hookList.push(address(hook));
-            emit HookInstalled(hook);
-        } else {
-            // uninstall the hook
-            hook.onUninstall(data);
-            delete hooks[hook];
-            for (uint256 i = 0; i < hookList.length; i++) {
-                if (hookList[i] == address(hook)) {
-                    hookList[i] = hookList[hookList.length - 1];
-                    hookList.pop();
-                    break;
-                }
-            }
-            emit HookRemoved(hook);
+        if (initData.length > 0) {
+            hook.onInstall(initData);
         }
+
+        emit HookUpdated(hook);
     }
 
     /* ----------------------OPERATION EXECUTION---------------------- */
     /**
-     * execute a transaction (called directly from owner, or by entryPoint)
+     * @notice execute a transaction (called directly from owner, or by entryPoint)
      */
     function execute(
         address dest,
         uint256 value,
         bytes calldata data
     ) external onlyEntryPointOrSelfOrRoot {
-        HookContext[] memory contexts = _executePreHooks(
-            value,
-            data,
-            RUN_ON_EXECUTE
-        );
+        // for now we do not support delegate calls for security reasons
+        // todo: Add a flag to allow delegate calls with security checks
         _call(dest, value, data);
-        _executePostHooks(contexts);
     }
 
     /**
-     * execute a sequence of transactions
+     * @notice execute a sequence of transactions
      * @dev to reduce gas consumption for trivial case (no value), use a zero-length array to mean zero value
      */
     function executeBatch(
@@ -217,31 +213,21 @@ contract PlentiFiAccount is
         uint256[] calldata value,
         bytes[] calldata data
     ) external onlyEntryPointOrSelfOrRoot {
+        uint256 destLength = dest.length;
+
         require(
-            dest.length == data.length &&
+            destLength == data.length &&
                 (value.length == 0 || value.length == data.length),
             "wrong array length"
         );
 
-        // todo: we might find a way to reduce the gas cost and complexity of this function
-        // by using a single context array for all the transactions
-        HookContext[][] memory contexts;
-
         if (value.length == 0) {
-            for (uint256 i = 0; i < dest.length; i++) {
-                contexts[i] = _executePreHooks(0, data[i], RUN_ON_EXECUTE);
+            for (uint256 i = 0; i < destLength; i++) {
                 _call(dest[i], 0, data[i]);
-                _executePostHooks(contexts[i]);
             }
         } else {
-            for (uint256 i = 0; i < dest.length; i++) {
-                contexts[i] = _executePreHooks(
-                    value[i],
-                    data[i],
-                    RUN_ON_EXECUTE
-                );
+            for (uint256 i = 0; i < destLength; i++) {
                 _call(dest[i], value[i], data[i]);
-                _executePostHooks(contexts[i]);
             }
         }
     }
@@ -265,6 +251,8 @@ contract PlentiFiAccount is
      */
     function initialize(
         bytes calldata rootValidatorAndData,
+        // 0x for no hook, else 20 bytes hook address + hook init data
+        bytes calldata hookAndData,
         // each elem is: 1 byte moduleType + 20 bytes moduleAddress + 1 byte module type
         // + module specific data
         bytes[] calldata initConfig
@@ -279,10 +267,19 @@ contract PlentiFiAccount is
             revert("account: invalid rootValidatorAndData");
         }
 
+        // install root validator
         rootValidator = IValidator(address(bytes20(rootValidatorAndData[:20])));
         rootValidator.onInstall(rootValidatorAndData[20:]);
 
         emit RootValidatorUpdated(rootValidator);
+
+        // install optional hook
+        if (hookAndData.length > 0) {
+            IHook hook = IHook(address(bytes20(hookAndData[:20])));
+            hook.onInstall(hookAndData[20:]);
+
+            emit HookUpdated(hook);
+        }
 
         for (uint256 i = 0; i < initConfig.length; i++) {
             bytes calldata config = initConfig[i];
@@ -302,13 +299,6 @@ contract PlentiFiAccount is
             // Handle different module types
             if (moduleType == MODULE_TYPE_VALIDATOR) {
                 updateValidator(IValidator(moduleAddress), true, moduleData);
-            } else if (moduleType == MODULE_TYPE_HOOK) {
-                // for hooks, module data = 1 byte flags + hook specific data
-                updateHook(
-                    IHook(moduleAddress),
-                    uint8(moduleData[0]),
-                    moduleData[1:]
-                );
             } else {
                 revert("account: unknown module type");
             }
@@ -320,15 +310,11 @@ contract PlentiFiAccount is
         emit Received(msg.sender, msg.value);
     }
 
-    fallback() external payable {
-        HookContext[] memory contexts = _executePreHooks(
-            msg.value,
-            msg.data,
-            RUN_ON_FALLBACK
-        );
-
+    /**
+     * @dev Fallback function to call the hook
+     */
+    fallback() external payable withHook {
         // todo: we could use this space to execute some stuff
-        _executePostHooks(contexts);
     }
 
     /* ----------------------ERC1967 AND UUPS---------------------- */
