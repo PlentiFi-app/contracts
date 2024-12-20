@@ -10,7 +10,7 @@ import {IEntryPoint} from "./interfaces/IEntryPoint.sol";
 import {ModuleManager} from "./core/ModuleManager.sol";
 import {BaseAccount} from "./core/BaseAccount.sol";
 import {IValidator, IHook} from "./interfaces/IModules.sol";
-import {SIG_VALIDATION_FAILED_UINT, SIG_VALIDATION_SUCCESS_UINT, ERC1271_MAGICVALUE, MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK, ERC1967_IMPLEMENTATION_SLOT} from "./core/constants.sol";
+import {SIG_VALIDATION_FAILED_UINT, SIG_VALIDATION_SUCCESS_UINT, ERC1271_MAGICVALUE, MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK, ERC1967_IMPLEMENTATION_SLOT} from "../../../common/Constants.sol";
 
 contract PlentiFiAccount is
     BaseAccount,
@@ -291,7 +291,7 @@ contract PlentiFiAccount is
                 revert("account: invalid config length");
             }
 
-            bytes1 moduleType = config[0];
+            uint8 moduleType = uint8(config[0]);
             address moduleAddress = address(bytes20(config[1:21]));
             bytes calldata moduleData = config[21:];
 
