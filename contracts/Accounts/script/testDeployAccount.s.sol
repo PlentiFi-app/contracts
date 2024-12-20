@@ -68,14 +68,14 @@ contract TestAccountDeployment is Script {
         );
 
         // optional hook and its data
-        bytes memory hookAndData = bytes("0x");
+        bytes memory hookAndData = bytes("");
 
         // other modules and their data
         bytes[] memory initConfig = new bytes[](0);
 
         // Encode initialization call
         createData = abi.encodeWithSignature(
-            "initialize(bytes,bytes[])",
+            "initialize(bytes,bytes,bytes[])",
             rootValidatorAndData,
             hookAndData,
             initConfig
