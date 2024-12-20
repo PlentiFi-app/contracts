@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "./AccountFactory.sol";
 import "./OpenAccountFactory.sol";
-import "../accounts/interfaces/IEntryPoint.sol";
+import "../../../common/interfaces/IEntryPoint.sol";
 
 /**
  * @title PlentiFiFactoryStaker

@@ -8,7 +8,7 @@ Deploy the FactoryStaker contract using create2
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 import {PlentiFiFactoryStaker} from "../../src/factory/FactoryStaker.sol";
-import {IDeterministicContractDeployer} from "../../src/accounts/interfaces/IDeterministicContractDeployer.sol";
+import {IDeterministicContractDeployer} from "../../../common/interfaces/IDeterministicContractDeployer.sol";
 
 contract DeployFactoryStaker is Script {
     function setUp() public {}

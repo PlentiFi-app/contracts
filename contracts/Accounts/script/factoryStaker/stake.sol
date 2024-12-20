@@ -8,7 +8,7 @@ Calls the stake function of the factoryStaker contract
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 import {PlentiFiFactoryStaker} from "../../src/factory/FactoryStaker.sol";
-import {IEntryPoint} from "../../src/accounts/interfaces/IEntryPoint.sol";
+import {IEntryPoint} from "../../../common/interfaces/IEntryPoint.sol";
 
 
 contract StakeScript is Script {

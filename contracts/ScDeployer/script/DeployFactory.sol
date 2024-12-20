@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { DeterministicContractDeployer } from "../src/ScDeployer.sol";
+import { DeterministicContractDeployer } from "../src/DeterministicContractDeployer.sol";
 import "forge-std/Script.sol";
 
 // command:

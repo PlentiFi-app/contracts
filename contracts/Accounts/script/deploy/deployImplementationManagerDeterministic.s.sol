@@ -8,7 +8,7 @@ Deploy the ImplementationManager contract using create2
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 import {ImplementationManager} from "../../src/deployers/ImplementationManager.sol";
-import {IDeterministicContractDeployer} from "../../src/accounts/interfaces/IDeterministicContractDeployer.sol";
+import {IDeterministicContractDeployer} from "../../../common/interfaces/IDeterministicContractDeployer.sol";
 
 contract DeployImplementationManager is Script {
     function setUp() public {}

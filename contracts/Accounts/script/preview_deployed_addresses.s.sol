@@ -10,7 +10,7 @@ Precompute the addresses of:
 
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
-import {IDeterministicContractDeployer} from "../src/accounts/interfaces/IDeterministicContractDeployer.sol";
+import {IDeterministicContractDeployer} from "../../common/interfaces/IDeterministicContractDeployer.sol";
 import {PlentiFiFactoryStaker} from "../src/factory/FactoryStaker.sol";
 import {ImplementationManager} from "../src/deployers/ImplementationManager.sol";
 import {PlentiFiAccountFactory} from "../src/factory/AccountFactory.sol";

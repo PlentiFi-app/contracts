@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+import {IDeterministicContractDeployer} from "../../common/interfaces/IDeterministicContractDeployer.sol";
+
 // A simple deterministic Contract Deployer created by PlentiFi
-contract DeterministicContractDeployer {
+contract DeterministicContractDeployer is IDeterministicContractDeployer {
 
     event ContractDeployerDeployed(address indexed contractAddress);
     event ContractDeployed(address indexed contractAddress);

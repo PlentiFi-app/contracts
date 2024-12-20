@@ -8,7 +8,7 @@ Deploy the Kernel contract
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 import {PlentiFiAccount} from "../../src/accounts/Account.sol";
-import {IEntryPoint} from "../../src/accounts/interfaces/IEntryPoint.sol";
+import {IEntryPoint} from "../../../common/interfaces/IEntryPoint.sol";
 
 contract DeployKernel is Script {
     function setUp() public {}

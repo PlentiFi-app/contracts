@@ -4,12 +4,13 @@ pragma solidity ^0.8.27;
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
-import {PackedUserOperation} from "./interfaces/PackedUserOperation.sol";
+import {PackedUserOperation} from "../../../common/interfaces/PackedUserOperation.sol";
 import {TokenCallbackHandler} from "./core/TokenCallbackHandler.sol";
-import {IEntryPoint} from "./interfaces/IEntryPoint.sol";
+import {IEntryPoint} from "../../../common/interfaces/IEntryPoint.sol";
 import {ModuleManager} from "./core/ModuleManager.sol";
 import {BaseAccount} from "./core/BaseAccount.sol";
-import {IValidator, IHook} from "./interfaces/IModules.sol";
+import {IValidator, IHook} from "../../../common/interfaces/IERC7579Modules.sol";
+
 import {SIG_VALIDATION_FAILED_UINT, SIG_VALIDATION_SUCCESS_UINT, ERC1271_MAGICVALUE, MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK, ERC1967_IMPLEMENTATION_SLOT} from "../../../common/Constants.sol";
 
 contract PlentiFiAccount is

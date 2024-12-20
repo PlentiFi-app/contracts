@@ -8,7 +8,7 @@ Deploy the PlentiFiAccountFactory contract using create2
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 import {PlentiFiAccountFactory} from "../../src/factory/AccountFactory.sol";
-import {IDeterministicContractDeployer} from "../../src/accounts/interfaces/IDeterministicContractDeployer.sol";
+import {IDeterministicContractDeployer} from "../../../common/interfaces/IDeterministicContractDeployer.sol";
 
 contract DeployFactory is Script {
     function setUp() public {}
