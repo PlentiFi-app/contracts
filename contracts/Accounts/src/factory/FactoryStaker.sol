@@ -2,9 +2,11 @@
 
 pragma solidity ^0.8.0;
 
-import "./AccountFactory.sol";
-import "./OpenAccountFactory.sol";
-import "../../../common/interfaces/IEntryPoint.sol";
+import {IEntryPoint} from "../../../common/interfaces/IEntryPoint.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {PlentiFiOpenAccountFactory} from "./OpenAccountFactory.sol";
+import {PlentiFiAccountFactory} from "./AccountFactory.sol";
+import {PlentiFiFactory} from "./PlentiFiFactory.sol";
 
 /**
  * @title PlentiFiFactoryStaker
@@ -79,6 +81,25 @@ contract PlentiFiFactoryStaker is Ownable {
         }
 
         return factory.createAccount{value: msg.value}(createData, salt);
+    }
+
+    /**
+     * @notice Get the counterfactual address of an account (deployed or not)
+     *
+     * @param factory - The factory contract to use
+     * @param salt - Unique salt for address generation
+     * 
+     * @return address - The address of the account
+     */
+    function getAddress(
+        PlentiFiFactory factory,
+        bytes32 salt
+    ) public view returns (address) {
+        if (!approved[address(factory)]) {
+            revert NotApprovedFactory();
+        }
+
+        return factory.getAddress(salt);
     }
 
     /**

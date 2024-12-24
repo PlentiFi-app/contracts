@@ -152,7 +152,7 @@ contract TestAccountDeployment is Script {
         console2.log("FactoryStaker is approved");
 
         factoryStaker.deployWithFactory(
-            PlentiFiAccountFactory(accountFactoryAddress),
+            PlentiFiAccountFactory(payable(accountFactoryAddress)),
             authorizationData,
             createData,
             vm.envBytes32("SALT")

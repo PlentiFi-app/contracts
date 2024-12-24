@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {IValidator, IModule} from "../../common/interfaces/IERC7579Modules.sol";
 import {PackedUserOperation} from "../../common/interfaces/PackedUserOperation.sol";
-import {ERC1271_MAGICVALUE, ERC1271_INVALID, MODULE_TYPE_VALIDATOR, SIG_VALIDATION_SUCCESS_UINT, SIG_VALIDATION_FAILED_UINT} from "./constants.sol";
+import {ERC1271_MAGICVALUE, ERC1271_INVALID, MODULE_TYPE_VALIDATOR, SIG_VALIDATION_SUCCESS_UINT, SIG_VALIDATION_FAILED_UINT} from "../../common/Constants.sol";
 
 contract DummyValidator is IValidator {
     string public constant name = "PlentiFi.DummyValidator-v0.0.1";

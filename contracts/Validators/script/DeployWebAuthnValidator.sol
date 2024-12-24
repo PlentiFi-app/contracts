@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import {SclVerifier} from "../src/webAuthnValidator/SclVerifier.sol";
 import {WebAuthn256r1Validator} from "../src/webAuthnValidator/WebAuthn256r1Validator.sol";
+// import {IEntryPoint} from "../../common/interfaces/IEntryPoint.sol";
 
 import "forge-std/Script.sol";
 
-// address deployer: 0xaF06998b48c1cC58261c26dfAe284228C7A65bDF
 // command:
 // forge script script/DeployWebAuthnValidator.sol --broadcast -vvv --rpc-url http://127.0.0.1:7545 --private-key 
 contract DeployAll is Script {
@@ -26,6 +26,14 @@ contract DeployAll is Script {
             "webAuthn256r1Validator address: ",
             address(webAuthn256r1Validator)
         );
+
+        // // stake
+        // uint256 amountToStake = 1; // wei
+        // uint32 unstakeDelay = 100; // seconds
+        // address entryPoint = address(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
+        // webAuthn256r1Validator.stake{value: amountToStake}(IEntryPoint(entryPoint), unstakeDelay);
+
+        // console2.log("WebAuthn256r1Validator staked %d wei", amountToStake);
 
         vm.stopBroadcast();
     }

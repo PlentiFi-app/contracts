@@ -10,7 +10,7 @@ pragma solidity ^0.8.0;
 import {ECDSA} from "solady/utils/ECDSA.sol";
 import {IModule, IValidator} from "../../common/interfaces/IERC7579Modules.sol";
 import {PackedUserOperation} from "../../common/interfaces/PackedUserOperation.sol";
-import {SIG_VALIDATION_SUCCESS_UINT, SIG_VALIDATION_FAILED_UINT, MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK, ERC1271_MAGICVALUE, ERC1271_INVALID} from "../../common/Constants.sol";
+import {SIG_VALIDATION_SUCCESS_UINT, SIG_VALIDATION_FAILED_UINT, MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK, ERC1271_MAGICVALUE, ERC1271_INVALID, USEROP_SIGNATURE_OFFSET} from "../../common/Constants.sol";
 
 /**
  * @dev Custom errors for better gas efficiency and error handling
@@ -19,6 +19,10 @@ error NotInitialized(address account);
 error InvalidSignatureLength(uint256 length);
 error InvalidOwnerAddress(address owner);
 error RecoveredAddressZero();
+
+/////
+error UserOpHash(bytes32 userOpHash);
+/////
 
 /**
  * @dev Storage structure for the validator
@@ -104,7 +108,12 @@ contract ECDSAValidator is IValidator {
         bytes32 userOpHash
     ) external payable override returns (uint256) {
         return
-            _validateSignature(msg.sender, userOpHash, userOp.signature)
+            // remove the first 20 bytes of the signature (the validator address)
+            _validateSignature(
+                msg.sender,
+                userOpHash,
+                userOp.signature[USEROP_SIGNATURE_OFFSET:]
+            )
                 ? SIG_VALIDATION_SUCCESS_UINT
                 : SIG_VALIDATION_FAILED_UINT;
     }
@@ -114,12 +123,12 @@ contract ECDSAValidator is IValidator {
      * @inheritdoc IValidator
      */
     function isValidSignatureWithSender(
-        address,
+        address sender,
         bytes32 hash,
         bytes calldata sig
     ) external view override returns (bytes4) {
         return
-            _validateSignature(msg.sender, hash, sig)
+            _validateSignature(sender, hash, sig)
                 ? ERC1271_MAGICVALUE
                 : ERC1271_INVALID;
     }

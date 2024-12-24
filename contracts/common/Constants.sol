@@ -16,7 +16,9 @@ uint8 constant MODULE_TYPE_EXECUTOR = 2;
 uint8 constant MODULE_TYPE_FALLBACK = 3;
 uint8 constant MODULE_TYPE_HOOK = 4;
 
-
+// offset for userop signature in packed userop
+// userOp.signature = 20 bytes address + validator specific data
+uint256 constant USEROP_SIGNATURE_OFFSET = 20;
 
 
 bytes32 constant ERC1967_IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;

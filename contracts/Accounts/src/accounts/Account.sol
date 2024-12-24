@@ -24,13 +24,14 @@ contract PlentiFiAccount is
 
     IEntryPoint public immutable ENTRY_POINT; // entryPointV0.7 expected
 
+    error ZeroAddress();
+
     event BatchExecuted(uint256 opCount);
     event Executed(address indexed dest, uint256 value, bytes data);
 
-    error ZeroAddress();
-
     event Received(address sender, uint256 amount);
     event Upgraded(address indexed implementation);
+    event FallbackCalled();
 
     modifier onlyEntryPointOrSelfOrRoot() {
         if (
@@ -318,6 +319,7 @@ contract PlentiFiAccount is
      * @dev Fallback function to call the hook
      */
     fallback() external payable withHook {
+        emit FallbackCalled();
         // todo: we could use this space to execute some stuff
     }
 
@@ -355,5 +357,31 @@ contract PlentiFiAccount is
         address newImplementation /* pure */
     ) internal pure override {
         if (newImplementation == address(0)) revert ZeroAddress();
+    }
+
+    /* ----------------------STAKING FUNCTIONS---------------------- */
+    error InvalidUnstakeDelay();
+
+    error ZeroValue();
+
+    /**
+     * @notice Add stake to the EntryPoint contract
+     * @param unstakeDelay Time delay for unstaking
+     */
+    function stake(uint32 unstakeDelay) external payable {
+        if (address(entryPoint()) == address(0)) revert ZeroAddress();
+        if (msg.value == 0) revert ZeroValue();
+        if (unstakeDelay == 0) revert InvalidUnstakeDelay();
+
+        IEntryPoint(entryPoint()).addStake{value: msg.value}(unstakeDelay);
+    }
+
+    /**
+     * @notice Initiate stake withdrawal process
+     */
+    function unlockStake() external payable onlyEntryPointOrSelfOrRoot {
+        if (address(entryPoint()) == address(0)) revert ZeroAddress();
+
+        IEntryPoint(entryPoint()).unlockStake();
     }
 }

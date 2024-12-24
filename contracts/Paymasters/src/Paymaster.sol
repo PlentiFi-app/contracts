@@ -6,7 +6,7 @@ pragma solidity ^0.8.23;
 
 import {BasePaymaster} from "../../common/core/BasePaymaster.sol";
 import {_packValidationData} from "../../common/core/Helpers.sol";
-import {IEntryPoint} from "../../common/interfaces/IEntryPoint.sol";   
+import {IEntryPoint} from "../../common/interfaces/IEntryPoint.sol";
 import {PackedUserOperation} from "../../common/interfaces/PackedUserOperation.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -50,14 +50,16 @@ contract Paymaster is BasePaymaster {
 
     /**
      * @dev Emitted when a user operation is successfully sponsored
-     * @param userOpSender Address of the account that initiated the operation
-     * @param actualGasCost Total gas cost incurred
-     * @param actualUserOpFeePerGas Gas price used for the operation
+     * @param sender Address of the account that initiated the operation
+     * @param sponsorUUID Unique identifier for tracking sponsored transactions
+     * @param userOpFeeGasCost Total gas cost incurred
+     * @param userOpFeePerGas Fee per gas unit paid by the paymaster
      */
     event UserOperationSponsored(
-        address indexed userOpSender,
-        uint256 actualGasCost,
-        uint128 actualUserOpFeePerGas
+        address indexed sender,
+        uint128 indexed sponsorUUID,
+        uint256 userOpFeeGasCost,
+        uint256 userOpFeePerGas
     );
 
     /**
@@ -188,8 +190,9 @@ contract Paymaster is BasePaymaster {
         if (mode != PostOpMode.postOpReverted) {
             emit UserOperationSponsored(
                 userOpSender,
+                sponsorUUID,
                 actualGasCostWithPostOp,
-                sponsorUUID
+                actualUserOpFeePerGas
             );
         }
     }

@@ -2,9 +2,11 @@
 pragma solidity ^0.8.28;
 
 import {PlentiFiFactory} from "./PlentiFiFactory.sol";
+import {PlentiFiAccount} from "../accounts/Account.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {IEntryPoint} from "../../../common/interfaces/IEntryPoint.sol";
 
 /**
  * @title PlentiFiAccountFactory
@@ -127,7 +129,7 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
         bytes calldata authorizationSig,
         bytes32 salt
     ) internal view returns (bool) {
-        bytes32 hash = _getHash(salt).toEthSignedMessageHash();
+        bytes32 hash = getHash(salt).toEthSignedMessageHash();
 
         address signer = ECDSA.recover(hash, authorizationSig);
 
@@ -165,11 +167,8 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
      * @notice Computes the message hash for authorization
      * @param salt Deployment salt
      */
-    function _getHash(bytes32 salt) public view returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(ID, address(this), salt, block.chainid)
-            );
+    function getHash(bytes32 salt) public view returns (bytes32) {
+        return keccak256(abi.encode(ID, address(this), salt, block.chainid));
     }
 
     /**
@@ -195,4 +194,15 @@ contract PlentiFiAccountFactory is PlentiFiFactory, Ownable {
         _transferOwnership(backupOwner);
         backupOwnershipClaim = 0;
     }
+
+    /* --------------------ETH FUNCTIONS-------------------- */
+    /**
+     * @notice Withdraw contract balance to owner
+     * @param amount Amount to withdraw
+     */
+    function withdraw(uint256 amount) external onlyOwner {
+        payable(owner()).transfer(amount);
+    }
+
+    receive() external payable {}
 }
