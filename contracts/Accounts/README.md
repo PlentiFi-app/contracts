@@ -38,9 +38,9 @@ forge script script/deploy/deployAccountFactoryDeterministic.s.sol --broadcast -
 
 ### If not already done:
 
-8. Deploy Kernel:
+8. Deploy Account:
 ```bash
-forge script script/deploy/deployKernel.s.sol --broadcast --rpc-url <your_rpc_url>  --private-key <your_private_key>
+forge script script/deploy/deployAccount.s.sol --broadcast --rpc-url <your_rpc_url>  --private-key <your_private_key>
 ```
 
 9. Deploy the ProxyUpgrader:

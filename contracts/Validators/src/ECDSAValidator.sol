@@ -38,8 +38,8 @@ struct ECDSAValidatorStorage {
  * @dev Supports both standard ECDSA signatures and EthSign message format
  */
 contract ECDSAValidator is IValidator {
-    /// @notice Emitted when a new owner is registered for a kernel (smart account)
-    event OwnerRegistered(address indexed kernel, address indexed owner);
+    /// @notice Emitted when a new owner is registered for a account (smart account)
+    event OwnerRegistered(address indexed account, address indexed owner);
 
     /// @notice Maps smart accounts to their validator storage
     mapping(address => ECDSAValidatorStorage) public ecdsaValidatorStorage;

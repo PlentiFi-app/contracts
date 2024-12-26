@@ -77,26 +77,33 @@ contract Paymaster is BasePaymaster {
         transferOwnership(_owner);
     }
 
-    /**
-     * @dev Generates a hash for signing/validating the user operation
-     * @param userOp The user operation to hash
-     * @param pmData Paymaster data associated with the operation
-     * @return bytes32 Hash of the operation data
-     */
+    // /**
+    //  * @dev Generates a hash for signing/validating the user operation
+    //  * @param userOp The user operation to hash
+    //  * @param pmData Paymaster data associated with the operation
+    //  * @return bytes32 Hash of the operation data
+    //  */
     function getHash(
-        PackedUserOperation calldata userOp,
+        // PackedUserOperation calldata userOp,
+        address sender,
+        bytes calldata initCode,
+        bytes calldata callData,
         PaymasterData memory pmData
     ) public view returns (bytes32) {
         return
             keccak256(
                 abi.encode(
-                    userOp.sender,
-                    keccak256(userOp.initCode),
-                    keccak256(userOp.callData),
+                    // userOp.sender,
+                    // keccak256(userOp.initCode),
+                    // keccak256(userOp.callData),
+                    sender,
+                    keccak256(initCode),
+                    keccak256(callData),
                     block.chainid,
                     pmData.validAfter,
                     pmData.validUntil,
-                    pmData.sponsorUUID
+                    pmData.sponsorUUID,
+                    pmData.allowAnyBundler
                 )
             );
     }
@@ -138,8 +145,7 @@ contract Paymaster is BasePaymaster {
             PaymasterData memory paymasterData,
             bytes memory signature
         ) = parsePaymasterAndData(
-                userOp
-                    .paymasterAndData[/* PAYMASTER_DATA_OFFSET */ /* 20: */ 52:]
+                userOp.paymasterAndData[PAYMASTER_DATA_OFFSET:]
             );
 
         if (!paymasterData.allowAnyBundler && !approvedBundlers[tx.origin])
@@ -150,7 +156,14 @@ contract Paymaster is BasePaymaster {
             "VerifyingPaymaster: invalid signature length in paymasterAndData"
         );
 
-        bytes32 hash = getHash(userOp, paymasterData).toEthSignedMessageHash();
+        // bytes32 hash = getHash(userOp, paymasterData).toEthSignedMessageHash();
+        bytes32 hash = getHash(
+            userOp.sender,
+            userOp.initCode,
+            userOp.callData,
+            // userOp,
+            paymasterData
+        ).toEthSignedMessageHash();
 
         bool isSignatureValid = approvedSigners[ECDSA.recover(hash, signature)];
 

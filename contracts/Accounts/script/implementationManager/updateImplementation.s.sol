@@ -2,14 +2,14 @@
 pragma solidity ^0.8.19;
 
 /*
-This script update the kernel implementation in the ImplementationManager 
+This script update the Account implementation in the ImplementationManager 
 */
 
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 import {ImplementationManager} from "../../src/deployers/ImplementationManager.sol";
 
-contract UpdateKernelImplementation is Script {
+contract UpdateAccountImplementation is Script {
     function setUp() public {}
 
     function run() public {
@@ -18,10 +18,10 @@ contract UpdateKernelImplementation is Script {
         
         // Load addresses from environment
         address implementationManagerAddress = vm.envAddress("EXPECTED_IMPLEMENTATION_MANAGER_ADDRESS");
-        address kernel = vm.envAddress("KERNEL_IMPLEMENTATION_ADDRESS");
+        address account = vm.envAddress("ACCOUNT_IMPLEMENTATION_ADDRESS");
         
         require(implementationManagerAddress != address(0), "EXPECTED_IMPLEMENTATION_MANAGER_ADDRESS not set in env");
-        require(kernel != address(0), "KERNEL_IMPLEMENTATION_ADDRESS not set in env");
+        require(account != address(0), "ACCOUNT_IMPLEMENTATION_ADDRESS not set in env");
 
         /* -------------ENSURE CONTRACTS ARE DEPLOYED----------------- */
         require(
@@ -29,8 +29,8 @@ contract UpdateKernelImplementation is Script {
             "ImplementationManager not deployed"
         );
         require(
-            address(kernel).code.length > 0,
-            "Kernel not deployed"
+            address(account).code.length > 0,
+            "Account not deployed"
         );
 
         /* -------------INITIALIZE ImplementationManager----------------- */
@@ -40,21 +40,21 @@ contract UpdateKernelImplementation is Script {
         bool isInitialized = implementationManager.isInitialized();
         require(isInitialized, "ImplementationManager not initialized");
 
-        // Check if kernel is already set to the new value
-        address currentKernel = implementationManager.implementation();
-        if (currentKernel == kernel) {
-            console2.log("Kernel already updated to the new value:", kernel);
+        // Check if account is already set to the new value
+        address currentAccount = implementationManager.implementation();
+        if (currentAccount == account) {
+            console2.log("Account already updated to the new value:", account);
             return;
         }
 
         // Start broadcasting transactions
         vm.startBroadcast(deployerPrivateKey);
 
-        /* -------------UPDATE kernel address----------------- */
-        implementationManager.setImplementation(kernel);
+        /* -------------UPDATE account address----------------- */
+        implementationManager.setImplementation(account);
 
         vm.stopBroadcast();
 
-        console2.log("Kernel updated to:", kernel);
+        console2.log("Account updated to:", account);
     }
 }

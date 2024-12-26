@@ -135,7 +135,7 @@ contract PlentiFiAccount is
      * @param data - The data to pass to the current root validator to verify the change
      * @param initData - The data to initialize the new root validator
      *
-     * data = keccak256(abi.encodePacked(initData, address(rootValidator), address(newRootValidator)))
+     * data = keccak256(abi.encode(initData, address(rootValidator), address(newRootValidator)))
      */
     function updateRootValidator(
         IValidator newRootValidator,
@@ -148,7 +148,7 @@ contract PlentiFiAccount is
 
         // validate the new root validator
         bytes32 message = keccak256(
-            abi.encodePacked(
+            abi.encode(
                 initData,
                 address(rootValidator),
                 address(newRootValidator)

@@ -35,8 +35,8 @@ contract PostDeploymentSetup is Script {
         address accountFactoryAddress = vm.envAddress("EXPECTED_PLENTIFI_CANONICAL_FACTORY_ADDRESS");
         require(accountFactoryAddress != address(0), "EXPECTED_PLENTIFI_CANONICAL_FACTORY_ADDRESS not set in env");
 
-        address kernelAddress = vm.envAddress("KERNEL_IMPLEMENTATION_ADDRESS");
-        require(kernelAddress != address(0), "KERNEL_IMPLEMENTATION_ADDRESS not set in env");
+        address accountAddress = vm.envAddress("ACCOUNT_IMPLEMENTATION_ADDRESS");
+        require(accountAddress != address(0), "ACCOUNT_IMPLEMENTATION_ADDRESS not set in env");
 
         address proxyUpgrader = vm.envAddress("PROXY_UPGRADER_ADDRESS");
         require(proxyUpgrader != address(0), "PROXY_UPGRADER_ADDRESS not set in env");
@@ -55,8 +55,8 @@ contract PostDeploymentSetup is Script {
             "AccountFactory not deployed"
         );
         require(
-            address(kernelAddress).code.length > 0,
-            "Kernel not deployed"
+            address(accountAddress).code.length > 0,
+            "Account not deployed"
         );
         require(
             address(proxyUpgrader).code.length > 0,
@@ -74,16 +74,16 @@ contract PostDeploymentSetup is Script {
             address currentProxyUpgrader = implementationManager.proxyUpgrader();
 
             require(
-                currentImplementation == kernelAddress && currentProxyUpgrader == proxyUpgrader,
+                currentImplementation == accountAddress && currentProxyUpgrader == proxyUpgrader,
                 "ImplementationManager already initialized with different values"
             );
         } else {
             vm.startBroadcast(deployerPrivateKey);
             
-            implementationManager.initialize(kernelAddress, proxyUpgrader);
+            implementationManager.initialize(accountAddress, proxyUpgrader);
             
             vm.stopBroadcast();
-            console2.log("ImplementationManager initialized with Kernel and ProxyUpgrader");
+            console2.log("ImplementationManager initialized with Account and ProxyUpgrader");
         }
 
         /* -------------REGISTER AccountFactory in FactoryStaker----------------- */
